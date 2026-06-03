@@ -29,14 +29,14 @@ public class FieldCentricCommand extends Command{
         // Get the x speed. We are inverting this because Xbox controllers return
         // negative values when we push forward.
         final var xSpeed =
-            -m_xspeedLimiter.calculate(MathUtil.applyDeadband(driveController.getLeftY(), 0.02))
+            -MathUtil.applyDeadband(driveController.getLeftY(), 0.02)
                 * DriveSubsystem.kMaxSpeed;
 
         // Get the y speed or sideways/strafe speed. We are inverting this because
         // we want a positive value when we pull to the left. Xbox controllers
         // return positive values when you pull to the right by default.
         final var ySpeed =
-            -m_yspeedLimiter.calculate(MathUtil.applyDeadband(driveController.getLeftX(), 0.02))
+            -MathUtil.applyDeadband(driveController.getLeftX(), 0.02)
                 * DriveSubsystem.kMaxSpeed;
 
         // Get the rate of angular rotation. We are inverting this because we want a
@@ -44,7 +44,7 @@ public class FieldCentricCommand extends Command{
         // mathematics). Xbox controllers return positive values when you pull to
         // the right by default.
         final var rot =
-            -m_rotLimiter.calculate(MathUtil.applyDeadband(driveController.getRightX(), 0.02))
+            -MathUtil.applyDeadband(driveController.getRightX(), 0.02)
                 * DriveSubsystem.kMaxAngularSpeed;
 
         drive.drive(xSpeed, ySpeed, rot, time.get());

@@ -13,6 +13,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class DriveSubsystem extends SubsystemBase{
@@ -67,6 +68,7 @@ public class DriveSubsystem extends SubsystemBase{
             });
 
         robotPosePublisher.set(getCurrentPose());
+        SmartDashboard.putNumber("Current Velo", getCurrentVelocity());
     }
 
     public Pose2d getCurrentPose() {
@@ -109,6 +111,14 @@ public class DriveSubsystem extends SubsystemBase{
         m_frontRight.setDesiredState(swerveModuleStates[1]);
         m_backLeft.setDesiredState(swerveModuleStates[2]);
         m_backRight.setDesiredState(swerveModuleStates[3]);
+    }
+
+    public void updateSimState(double dtSeconds, double supplyVoltage) {
+        
+        m_frontLeft.updateSimState(dtSeconds, supplyVoltage);
+        m_frontRight.updateSimState(dtSeconds, supplyVoltage);
+        m_backLeft.updateSimState(dtSeconds, supplyVoltage);
+        m_backRight.updateSimState(dtSeconds, supplyVoltage);
     }
 
 }

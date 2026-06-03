@@ -2,7 +2,12 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.Inch;
 import static edu.wpi.first.units.Units.Meter;
+import static edu.wpi.first.units.Units.Revolutions;
+import static edu.wpi.first.units.Units.RevolutionsPerSecond;
+import static edu.wpi.first.units.Units.Rotations;
+import static edu.wpi.first.units.Units.Volts;
 
+import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VelocityVoltage;
@@ -18,12 +23,19 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.RobotState;
+import edu.wpi.first.wpilibj.simulation.DCMotorSim;
+import edu.wpi.first.wpilibj.simulation.EncoderSim;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class SwervePod extends SubsystemBase{
 
-    private static final double kDriveRotationsPerMeter = Meter.convertFrom(2, Inch) * 0.1; //Wheel Radius * Gear Ratio (here 1 wheel rotation to 10 motor rotations)
+    private static final double kDriveRotationsPerMeter = 10.0 / (Meter.convertFrom(2, Inch) * 2.0 * Math.PI); //Wheel Radius * Gear Ratio (here 1 wheel rotation to 10 motor rotations)
   
     private static final double kModuleMaxAngularVelocity = DriveSubsystem.kMaxAngularSpeed;
     private static final double kModuleMaxAngularAcceleration =
@@ -31,6 +43,20 @@ public class SwervePod extends SubsystemBase{
     
     private final TalonFX driveMotor, turnMotor;
     private final CANcoder canCoder;
+
+    private final DCMotorSim driveMotorSim = new DCMotorSim(
+        LinearSystemId.createDCMotorSystem(
+            DCMotor.getKrakenX60Foc(1), 0.001, 1
+        ),
+        DCMotor.getKrakenX60Foc(1)
+    );
+
+    private final DCMotorSim turnMotorSim = new DCMotorSim(
+        LinearSystemId.createDCMotorSystem(
+            DCMotor.getKrakenX60Foc(1), 0.001, 1
+        ),
+        DCMotor.getKrakenX60Foc(1)
+    );
 
     // Gains are for example purposes only - must be determined for your own robot!
     private final ProfiledPIDController m_turningPIDController =
@@ -62,7 +88,7 @@ public class SwervePod extends SubsystemBase{
         driveMotorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         driveMotorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         driveMotorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-        driveMotorConfig.Slot0.kP = 0.05;
+        driveMotorConfig.Slot0.kP = 100;
         driveMotorConfig.Slot0.kI = 0;
         driveMotorConfig.Slot0.kD = 0;
         driveMotorConfig.Slot0.kS = 0;
@@ -86,8 +112,12 @@ public class SwervePod extends SubsystemBase{
      * @return The current state of the module.
      */
     public SwerveModuleState getState() {
+        if (Utils.isSimulation()) {
+            return new SwerveModuleState(
+                driveMotorSim.getAngularVelocity().in(RevolutionsPerSecond) / kDriveRotationsPerMeter, new Rotation2d(turnMotorSim.getAngularVelocityRadPerSec() / 14));
+        }
         return new SwerveModuleState(
-            driveMotor.getVelocity().getValueAsDouble() * kDriveRotationsPerMeter, new Rotation2d(canCoder.getVelocity().getValueAsDouble() * 2 * Math.PI));
+            driveMotor.getVelocity().getValueAsDouble() / kDriveRotationsPerMeter, new Rotation2d(canCoder.getVelocity().getValueAsDouble() * 2 * Math.PI));
     }
 
     /**
@@ -96,8 +126,23 @@ public class SwervePod extends SubsystemBase{
      * @return The current position of the module.
      */
     public SwerveModulePosition getPosition() {
+        if (Utils.isSimulation()) {
+            return new SwerveModulePosition(
+                driveMotorSim.getAngularPosition().in(Rotations) / kDriveRotationsPerMeter, new Rotation2d(turnMotorSim.getAngularPositionRad() / 14));    
+        }
         return new SwerveModulePosition(
             driveMotor.getPosition().getValueAsDouble() * kDriveRotationsPerMeter, new Rotation2d(canCoder.getAbsolutePosition().getValueAsDouble() * 2 * Math.PI));
+    }
+
+    public void updateSimState(double dtSeconds, double supplyVoltage) {
+        driveMotor.getSimState().setSupplyVoltage(supplyVoltage);
+            turnMotor.getSimState().setSupplyVoltage(supplyVoltage);
+            SmartDashboard.putNumber("Voltage",  driveMotor.getSimState().getMotorVoltageMeasure().in(Volts));
+            driveMotorSim.setInputVoltage(driveMotor.getSimState().getMotorVoltageMeasure().in(Volts));
+            turnMotorSim.setInputVoltage(turnMotor.getSimState().getMotorVoltageMeasure().in(Volts));
+            driveMotorSim.update(dtSeconds);
+            turnMotorSim.update(dtSeconds);
+            SmartDashboard.putNumber("Actual Velo",  driveMotorSim.getAngularVelocity().in(RevolutionsPerSecond));
     }
 
     //////////////////////////////////////// Setters ////////////////////////////////////////
@@ -125,6 +170,7 @@ public class SwervePod extends SubsystemBase{
         final double turnFeedforward =
             m_turnFeedforward.calculate(m_turningPIDController.getSetpoint().velocity);
 
+        SmartDashboard.putNumber("Desired Velo", desiredState.speedMetersPerSecond * kDriveRotationsPerMeter);
         driveMotor.setControl(new VelocityVoltage(desiredState.speedMetersPerSecond * kDriveRotationsPerMeter));
         turnMotor.setVoltage(turnOutput + turnFeedforward);
     }
