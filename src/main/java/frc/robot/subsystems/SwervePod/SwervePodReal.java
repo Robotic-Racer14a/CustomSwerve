@@ -1,4 +1,4 @@
-package frc.robot.subsystems;
+package frc.robot.subsystems.SwervePod;
 
 import static edu.wpi.first.units.Units.Inch;
 import static edu.wpi.first.units.Units.Meter;
@@ -10,8 +10,6 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.ctre.phoenix6.sim.CANcoderSimState;
-import com.ctre.phoenix6.sim.TalonFXSimState;
 
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
@@ -19,9 +17,9 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.subsystems.DriveSubsystem;
 
-public class SwervePod extends SubsystemBase{
+public class SwervePodReal implements PodBase{
 
     private static final double kDriveRotationsPerMeter = Meter.convertFrom(2, Inch) * 0.1; //Wheel Radius * Gear Ratio (here 1 wheel rotation to 10 motor rotations)
   
@@ -45,7 +43,7 @@ public class SwervePod extends SubsystemBase{
     private final SimpleMotorFeedforward m_turnFeedforward = new SimpleMotorFeedforward(0, 0);
 
     
-    public SwervePod(int driveMotorID, int turnMotorID, int encoderID, double offset) {
+    public SwervePodReal(int driveMotorID, int turnMotorID, int encoderID, double offset) {
         driveMotor = new TalonFX(driveMotorID);
         turnMotor = new TalonFX(turnMotorID);
         canCoder = new CANcoder(encoderID);
