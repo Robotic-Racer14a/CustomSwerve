@@ -14,7 +14,6 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.subsystems.SwervePod.SwervePodReal;
 
 public class DriveSubsystem extends SubsystemBase{
 
@@ -26,10 +25,10 @@ public class DriveSubsystem extends SubsystemBase{
     private final Translation2d m_backLeftLocation = new Translation2d(-Meter.convertFrom(10.25, Inch), Meter.convertFrom(10.25, Inch));
     private final Translation2d m_backRightLocation = new Translation2d(-Meter.convertFrom(10.25, Inch), -Meter.convertFrom(10.25, Inch));
 
-    private final SwervePodReal m_frontLeft = new SwervePodReal(0, 10, 0, -0.494873046875);
-    private final SwervePodReal m_frontRight = new SwervePodReal(1, 11, 1, 0.357421875);
-    private final SwervePodReal m_backLeft = new SwervePodReal(2, 12, 2, 0.441650390625);
-    private final SwervePodReal m_backRight = new SwervePodReal(3, 13, 3, 0.0647);
+    private final SwervePod m_frontLeft = new SwervePod(0, 10, 0, -0.494873046875);
+    private final SwervePod m_frontRight = new SwervePod(1, 11, 1, 0.357421875);
+    private final SwervePod m_backLeft = new SwervePod(2, 12, 2, 0.441650390625);
+    private final SwervePod m_backRight = new SwervePod(3, 13, 3, 0.0647);
 
     private final Pigeon2 m_gyro = new Pigeon2(0);
 
