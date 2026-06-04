@@ -18,7 +18,6 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class SwervePod extends SubsystemBase{
@@ -46,9 +45,9 @@ public class SwervePod extends SubsystemBase{
     // Gains are for example purposes only - must be determined for your own robot!
     private final PIDController m_turningPIDController =
         new PIDController(
-            0.1,
+            1,
             0,
-            0);
+            0.1);
     
     public SwervePod(int driveMotorID, int turnMotorID, int encoderID, double offset) {
         driveMotor = new TalonFX(driveMotorID);
@@ -116,12 +115,10 @@ public class SwervePod extends SubsystemBase{
     public void updateSimState(double dtSeconds, double supplyVoltage) {
         driveMotor.getSimState().setSupplyVoltage(supplyVoltage);
             turnMotor.getSimState().setSupplyVoltage(supplyVoltage);
-            SmartDashboard.putNumber("Voltage",  driveMotor.getSimState().getMotorVoltageMeasure().in(Volts));
             driveMotorSim.setInputVoltage(driveMotor.getSimState().getMotorVoltageMeasure().in(Volts));
             turnMotorSim.setInputVoltage(turnMotor.getSimState().getMotorVoltageMeasure().in(Volts));
             driveMotorSim.update(dtSeconds);
             turnMotorSim.update(dtSeconds);
-            SmartDashboard.putNumber("Actual Velo",  driveMotorSim.getAngularVelocity().in(RevolutionsPerSecond));
     }
 
     //////////////////////////////////////// Setters ////////////////////////////////////////
@@ -141,14 +138,11 @@ public class SwervePod extends SubsystemBase{
         // driving.
         desiredState.cosineScale(encoderRotation);
 
-        m_turningPIDController.setPID(1,0,0.01);
         // Calculate the turning motor output from the turning PID controller.
         final double turnOutput =
             m_turningPIDController.calculate(
                 getPosition().angle.getRadians(), desiredState.angle.getRadians());
 
-
-        SmartDashboard.putNumber("Desired Velo", desiredState.speedMetersPerSecond * kDriveRotationsPerMeter);
         driveMotor.setControl(new VelocityVoltage(desiredState.speedMetersPerSecond * kDriveRotationsPerMeter));
         turnMotor.setVoltage(turnOutput);
     }
