@@ -14,8 +14,8 @@ import frc.robot.subsystems.DriveSubsystem;
 
 public class RobotContainer {
 
-  private final DriveSubsystem drive = new DriveSubsystem();
-  private final CommandXboxController driveController = new CommandXboxController(0);
+  final DriveSubsystem drive = new DriveSubsystem();
+  final CommandXboxController driveController = new CommandXboxController(0);
   private final Supplier<Double> currentTime;
 
   public RobotContainer(Supplier<Double> currentTime) {
@@ -24,7 +24,7 @@ public class RobotContainer {
   }
 
   private void configureBindings() {
-    drive.setDefaultCommand(new FieldCentricCommand(drive, driveController, currentTime));
+    //drive.setDefaultCommand(new FieldCentricCommand(drive, driveController, currentTime));
   }
 
   public Command getAutonomousCommand() {

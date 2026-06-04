@@ -19,11 +19,12 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class SwervePod extends SubsystemBase{
 
-    private static final double kDriveRotationsPerMeter = Meter.convertFrom(2, Inch) * 0.1; //Wheel Radius * Gear Ratio (here 1 wheel rotation to 10 motor rotations)
+    private static final double kDriveRotationsPerMeter = 10 / (Units.inchesToMeters(2) * 2 * Math.PI);
   
     private static final double kModuleMaxAngularVelocity = DriveSubsystem.kMaxAngularSpeed;
     private static final double kModuleMaxAngularAcceleration =
@@ -117,6 +118,10 @@ public class SwervePod extends SubsystemBase{
         // driving.
         desiredState.cosineScale(encoderRotation);
 
+        setState(desiredState);
+    }
+
+    public void setState(SwerveModuleState desiredState) {
         // Calculate the turning motor output from the turning PID controller.
         final double turnOutput =
             m_turningPIDController.calculate(
