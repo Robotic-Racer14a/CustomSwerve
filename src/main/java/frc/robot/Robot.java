@@ -74,27 +74,13 @@ public class Robot extends TimedRobot {
   @Override
   public void testExit() {}
 
-  private Notifier m_simNotifier = null;
-    private double m_lastSimTime;
-
 public void simulationInit() {
    
 }
 
+@Override
 public void simulationPeriodic() {
   
-    m_lastSimTime = Utils.getCurrentTimeSeconds();
-
-    /* Run simulation at a faster rate so PID gains behave more reasonably */
-    m_simNotifier = new Notifier(() -> {
-        final double currentTime = Utils.getCurrentTimeSeconds();
-        double deltaTime = currentTime - m_lastSimTime;
-        m_lastSimTime = currentTime;
-
-        /* use the measured time delta, get battery voltage from WPILib */
-        m_robotContainer.drive.updateSimState(deltaTime, RobotController.getBatteryVoltage());
-    });
-    m_simNotifier.startPeriodic(0.005);
-
+  m_robotContainer.drive.updateSimState(0.2, RobotController.getBatteryVoltage());
 }
 }

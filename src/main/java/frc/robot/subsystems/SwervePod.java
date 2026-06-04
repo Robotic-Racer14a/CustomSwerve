@@ -11,14 +11,12 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
-import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -27,9 +25,6 @@ public class SwervePod extends SubsystemBase{
 
     private static final double kDriveRotationsPerMeter = 10.0 / (Meter.convertFrom(2, Inch) * 2.0 * Math.PI); //Wheel Radius * Gear Ratio (here 1 wheel rotation to 10 motor rotations)
   
-    private static final double kModuleMaxAngularVelocity = DriveSubsystem.kMaxAngularSpeed;
-    private static final double kModuleMaxAngularAcceleration =
-        2 * Math.PI; // radians per second squared
     
     private final TalonFX driveMotor, turnMotor;
     private final CANcoder canCoder;
@@ -49,17 +44,11 @@ public class SwervePod extends SubsystemBase{
     );
 
     // Gains are for example purposes only - must be determined for your own robot!
-    private final ProfiledPIDController m_turningPIDController =
-        new ProfiledPIDController(
-            30,
+    private final PIDController m_turningPIDController =
+        new PIDController(
+            0.1,
             0,
-            0,
-            new TrapezoidProfile.Constraints(
-                 kModuleMaxAngularVelocity, kModuleMaxAngularAcceleration));
-
-    // Gains are for example purposes only - must be determined for your own robot!
-    private final SimpleMotorFeedforward m_turnFeedforward = new SimpleMotorFeedforward(0, 0);
-
+            0);
     
     public SwervePod(int driveMotorID, int turnMotorID, int encoderID, double offset) {
         driveMotor = new TalonFX(driveMotorID);
@@ -104,7 +93,7 @@ public class SwervePod extends SubsystemBase{
     public SwerveModuleState getState() {
         if (Utils.isSimulation()) {
             return new SwerveModuleState(
-                driveMotorSim.getAngularVelocity().in(RevolutionsPerSecond) / kDriveRotationsPerMeter, new Rotation2d(turnMotorSim.getAngularVelocityRadPerSec() / 14));
+                driveMotorSim.getAngularVelocity().in(RevolutionsPerSecond) / kDriveRotationsPerMeter, Rotation2d.fromRotations(turnMotorSim.getAngularVelocity().in(RotationsPerSecond) / 19));
         }
         return new SwerveModuleState(
             driveMotor.getVelocity().getValueAsDouble() / kDriveRotationsPerMeter, new Rotation2d(canCoder.getVelocity().getValueAsDouble() * 2 * Math.PI));
@@ -118,7 +107,7 @@ public class SwervePod extends SubsystemBase{
     public SwerveModulePosition getPosition() {
         if (Utils.isSimulation()) {
             return new SwerveModulePosition(
-                driveMotorSim.getAngularPosition().in(Rotations) / kDriveRotationsPerMeter, new Rotation2d(turnMotorSim.getAngularPositionRad() / 14));    
+                driveMotorSim.getAngularPosition().in(Rotations) / kDriveRotationsPerMeter, Rotation2d.fromRotations(turnMotorSim.getAngularPositionRotations() / 19));    
         }
         return new SwerveModulePosition(
             driveMotor.getPosition().getValueAsDouble() * kDriveRotationsPerMeter, new Rotation2d(canCoder.getAbsolutePosition().getValueAsDouble() * 2 * Math.PI));
@@ -152,16 +141,15 @@ public class SwervePod extends SubsystemBase{
         // driving.
         desiredState.cosineScale(encoderRotation);
 
+        m_turningPIDController.setPID(1,0,0.01);
         // Calculate the turning motor output from the turning PID controller.
         final double turnOutput =
             m_turningPIDController.calculate(
                 getPosition().angle.getRadians(), desiredState.angle.getRadians());
 
-        final double turnFeedforward =
-            m_turnFeedforward.calculate(m_turningPIDController.getSetpoint().velocity);
 
         SmartDashboard.putNumber("Desired Velo", desiredState.speedMetersPerSecond * kDriveRotationsPerMeter);
         driveMotor.setControl(new VelocityVoltage(desiredState.speedMetersPerSecond * kDriveRotationsPerMeter));
-        turnMotor.setVoltage(turnOutput + turnFeedforward);
+        turnMotor.setVoltage(turnOutput);
     }
 }

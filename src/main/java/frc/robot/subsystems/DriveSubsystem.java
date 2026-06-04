@@ -11,7 +11,9 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -54,6 +56,9 @@ public class DriveSubsystem extends SubsystemBase{
     StructPublisher<Pose2d> robotPosePublisher = NetworkTableInstance.getDefault()
         .getStructTopic("Robot Pose", Pose2d.struct).publish();
 
+    StructArrayPublisher<SwerveModuleState> publisher = NetworkTableInstance.getDefault()
+        .getStructArrayTopic("MyStates", SwerveModuleState.struct).publish();
+
     public DriveSubsystem() {
         m_gyro.reset();
     }
@@ -69,6 +74,12 @@ public class DriveSubsystem extends SubsystemBase{
 
         robotPosePublisher.set(getCurrentPose());
         SmartDashboard.putNumber("Current Velo", getCurrentVelocity());
+        publisher.set(new SwerveModuleState[] {
+                m_frontLeft.getState(),
+                m_frontRight.getState(),
+                m_backLeft.getState(),
+                m_backRight.getState()
+            });
     }
 
     public Pose2d getCurrentPose() {
