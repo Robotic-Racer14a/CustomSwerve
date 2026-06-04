@@ -67,23 +67,23 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    if (m_robotContainer.driveController.a().getAsBoolean() && !runToPosition) {
+    if (m_robotContainer.driveController.a().getAsBoolean()) {
       runToPosition = true;
-    } else if (m_robotContainer.driveController.a().getAsBoolean()) {
+    } else {
       runToPosition = false;
     }
 
     if (m_robotContainer.driveController.x().getAsBoolean()) {
-      target =  new SwerveModuleState(MetersPerSecond.of(0), Rotation2d.kZero);
+      target =  new SwerveModuleState(MetersPerSecond.of(1), Rotation2d.kZero);
     }
 
     if (m_robotContainer.driveController.y().getAsBoolean()) {
       target =  new SwerveModuleState(MetersPerSecond.of(0), Rotation2d.k180deg);
     }
 
-    if (runToPosition) {
-      m_robotContainer.drive.setSwerveStates(target);
-    }
+    // if (runToPosition) {
+      //m_robotContainer.drive.setSwerveStates(target);
+    // }
   }
 
   @Override
@@ -107,6 +107,6 @@ public void simulationInit() {
 @Override
 public void simulationPeriodic() {
   
-  m_robotContainer.drive.updateSimState(0.2, RobotController.getBatteryVoltage());
+  m_robotContainer.drive.updateSimState(0.02, RobotController.getBatteryVoltage());
 }
 }
