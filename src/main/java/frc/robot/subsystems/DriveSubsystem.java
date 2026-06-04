@@ -131,5 +131,12 @@ public class DriveSubsystem extends SubsystemBase{
         m_backLeft.updateSimState(dtSeconds, supplyVoltage);
         m_backRight.updateSimState(dtSeconds, supplyVoltage);
     }
+    
+    public void setSwerveStates(SwerveModuleState state) {
+        m_frontLeft.setState(state);
+        m_frontRight.setState(state);
+        m_backLeft.setState(state);
+        m_backRight.setState(state);
+    }
 
 }

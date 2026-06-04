@@ -24,7 +24,7 @@ public class RobotContainer {
   }
 
   private void configureBindings() {
-    drive.setDefaultCommand(new FieldCentricCommand(drive, driveController, currentTime));
+    //drive.setDefaultCommand(new FieldCentricCommand(drive, driveController, currentTime));
   }
 
   public Command getAutonomousCommand() {

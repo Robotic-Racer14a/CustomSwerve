@@ -18,11 +18,13 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class SwervePod extends SubsystemBase{
 
-    private static final double kDriveRotationsPerMeter = 10.0 / (Meter.convertFrom(2, Inch) * 2.0 * Math.PI); //Wheel Radius * Gear Ratio (here 1 wheel rotation to 10 motor rotations)
+    private static final double kDriveRotationsPerMeter = 10 / (Units.inchesToMeters(2) * 2 * Math.PI);
   
     
     private final TalonFX driveMotor, turnMotor;
@@ -138,6 +140,10 @@ public class SwervePod extends SubsystemBase{
         // driving.
         desiredState.cosineScale(encoderRotation);
 
+        setState(desiredState);
+    }
+
+    public void setState(SwerveModuleState desiredState) {
         // Calculate the turning motor output from the turning PID controller.
         final double turnOutput =
             m_turningPIDController.calculate(
