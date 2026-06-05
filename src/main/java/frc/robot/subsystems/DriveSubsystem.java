@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
+import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.hardware.Pigeon2;
 
 import edu.wpi.first.math.VecBuilder;
@@ -10,16 +11,20 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class DriveSubsystem extends SubsystemBase{
 
-    public static final double kMaxSpeed = 3.0; // 3 meters per second
-    public static final double kMaxAngularSpeed = Math.PI; // 1/2 rotation per second
+    public static final double kMaxSpeed = 4.0; // 3 meters per second
+    public static final double kMaxAngularSpeed = Math.PI * 8; // 1/2 rotation per second
 
     private final Translation2d m_frontLeftLocation = new Translation2d(Meter.convertFrom(10.25, Inch), Meter.convertFrom(10.25, Inch));
     private final Translation2d m_frontRightLocation = new Translation2d(Meter.convertFrom(10.25, Inch), -Meter.convertFrom(10.25, Inch));
@@ -54,6 +59,12 @@ public class DriveSubsystem extends SubsystemBase{
     StructPublisher<Pose2d> robotPosePublisher = NetworkTableInstance.getDefault()
         .getStructTopic("Robot Pose", Pose2d.struct).publish();
 
+    StructArrayPublisher<SwerveModuleState> statesPublisher = NetworkTableInstance.getDefault()
+        .getStructArrayTopic("MyStates", SwerveModuleState.struct).publish();
+
+    StructArrayPublisher<SwerveModuleState> targetStatesPublisher = NetworkTableInstance.getDefault()
+        .getStructArrayTopic("TargetStates", SwerveModuleState.struct).publish();
+
     public DriveSubsystem() {
         m_gyro.reset();
     }
@@ -67,14 +78,30 @@ public class DriveSubsystem extends SubsystemBase{
                 m_backRight.getPosition()
             });
 
+        if (Utils.isSimulation()) {
+            var simRotSpeed = m_kinematics.toChassisSpeeds(
+                m_frontLeft.getState(),
+                m_frontRight.getState(),
+                m_backLeft.getState(),
+                m_backRight.getState()
+            ).omegaRadiansPerSecond;
+
+            m_gyro.getSimState().setAngularVelocityZ(simRotSpeed);
+            m_gyro.getSimState().addYaw(Units.radiansToDegrees(simRotSpeed) * 0.02);
+
+        }
+
         robotPosePublisher.set(getCurrentPose());
+        SmartDashboard.putNumber("Current Velo", getCurrentVelocity());
+        statesPublisher.set(new SwerveModuleState[] {
+                m_frontLeft.getState(),
+                m_frontRight.getState(),
+                m_backLeft.getState(),
+                m_backRight.getState()
+            });
     }
 
     public Pose2d getCurrentPose() {
-        m_kinematics.toChassisSpeeds(m_frontLeft.getState(),
-                m_frontRight.getState(),
-                m_backLeft.getState(),
-                m_backRight.getState());
         return currentPoseEstimator.getEstimatedPosition();
     }
 
@@ -110,6 +137,16 @@ public class DriveSubsystem extends SubsystemBase{
         m_frontRight.setDesiredState(swerveModuleStates[1]);
         m_backLeft.setDesiredState(swerveModuleStates[2]);
         m_backRight.setDesiredState(swerveModuleStates[3]);
+
+        targetStatesPublisher.set(swerveModuleStates);
+    }
+
+    public void updateSimState(double dtSeconds, double supplyVoltage) {
+        
+        m_frontLeft.updateSimState(dtSeconds, supplyVoltage);
+        m_frontRight.updateSimState(dtSeconds, supplyVoltage);
+        m_backLeft.updateSimState(dtSeconds, supplyVoltage);
+        m_backRight.updateSimState(dtSeconds, supplyVoltage);
     }
 
     public void setSwerveStates(SwerveModuleState state) {
@@ -117,6 +154,8 @@ public class DriveSubsystem extends SubsystemBase{
         m_frontRight.setState(state);
         m_backLeft.setState(state);
         m_backRight.setState(state);
+
+        
     }
 
 }
