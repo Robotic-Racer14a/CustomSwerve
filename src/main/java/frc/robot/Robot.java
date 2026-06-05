@@ -14,12 +14,20 @@ import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
+import edu.wpi.first.math.controller.ArmFeedforward;
+import edu.wpi.first.math.controller.ElevatorFeedforward;
+import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
+import edu.wpi.first.wpilibj.simulation.ElevatorSim;
+import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
@@ -50,23 +58,27 @@ public class Robot extends TimedRobot {
         ),
         DCMotor.getKrakenX60Foc(1)
     );
-  private final MechanismLigament2d m_elevator;
-  private final MechanismLigament2d m_wrist;
+  
+  ElevatorSim sim = new ElevatorSim(DCMotor.getKrakenX60(2), 10, 1, Units.inchesToMeters(2), 0.5, 3, true, 0.5);
+  SingleJointedArmSim armSim = new SingleJointedArmSim(DCMotor.getKrakenX60(1), 10, 0.2, Units.inchesToMeters(10), Units.degreesToRadians(-110), Units.degreesToRadians(280), true, 0);
+
+  // the main mechanism object
+    Mechanism2d mech = new Mechanism2d(3, 5);
+    // the mechanism root node
+    MechanismRoot2d root = mech.getRoot("climber", 1.5, 0);
+  
+  MechanismLigament2d m_elevatorMech2d =
+      root.append(
+          new MechanismLigament2d("Elevator", sim.getPositionMeters(), 90));
+
+  MechanismLigament2d armMech2d =
+      m_elevatorMech2d.append(
+          new MechanismLigament2d("Arm", Units.inchesToMeters(18), Units.radiansToDegrees(armSim.getAngleRads()) - 90, 10,  new Color8Bit(0, 0, 190)));
 
   public Robot() {
     m_robotContainer = new RobotContainer(this::getPeriod);
 
-    // the main mechanism object
-    Mechanism2d mech = new Mechanism2d(3, 3);
-    // the mechanism root node
-    MechanismRoot2d root = mech.getRoot("climber", 1.5, 0);
 
-    // MechanismLigament2d objects represent each "section"/"stage" of the mechanism, and are based
-    // off the root node or another ligament object
-    m_elevator = root.append(new MechanismLigament2d("elevator", 0, 90));
-    m_wrist =
-        m_elevator.append(
-            new MechanismLigament2d("wrist", 0.5, 90, 6, new Color8Bit(Color.kPurple)));
 
     // post the mechanism to the dashboard
     SmartDashboard.putData("Mech2d", mech);
@@ -89,8 +101,8 @@ public class Robot extends TimedRobot {
     wristMotor.getSimState().setRawRotorPosition(wristMotorSim.getAngularPosition().in(Rotations) * 20);
     wristMotor.getSimState().setRotorVelocity(wristMotorSim.getAngularVelocity().in(RotationsPerSecond) * 20);
 
-    m_elevator.setLength(elevatorMotor.getPosition().getValueAsDouble() / 10);
-    m_wrist.setAngle((wristMotor.getPosition().getValueAsDouble() / 20) * 360);
+    // m_elevator.setLength(elevatorMotor.getPosition().getValueAsDouble() / 10);
+    // m_wrist.setAngle((wristMotor.getPosition().getValueAsDouble() / 20) * 360);
   }
 
   @Override
@@ -124,35 +136,34 @@ public class Robot extends TimedRobot {
     }
   }
 
-  boolean runToPosition = false;
-  SwerveModuleState target = new SwerveModuleState(MetersPerSecond.of(0), Rotation2d.k180deg);
 
+  ProfiledPIDController elevatorPID = new ProfiledPIDController(400, 0, 0, new TrapezoidProfile.Constraints(3, 3));
+  ElevatorFeedforward elevatorFF = new ElevatorFeedforward(0, 0.02, 6.3);
+
+  ProfiledPIDController armPID = new ProfiledPIDController(5, 0, 1, new TrapezoidProfile.Constraints(Units.degreesToRadians(360), Units.degreesToRadians(360)));
+  ArmFeedforward armFF = new ArmFeedforward(0, 1.98, 0.263);
 
   @Override
   public void teleopPeriodic() {
-    if (m_robotContainer.driveController.a().getAsBoolean()) {
-      wristMotor.set(0.2);
-      runToPosition = true;
-    }else if (m_robotContainer.driveController.b().getAsBoolean()) {
-      wristMotor.set(-0.2);
-    } else {
-      wristMotor.set(0);
-      runToPosition = false;
-    }
+    if (m_robotContainer.driveController.a().getAsBoolean()) elevatorPID.setGoal(1);
+    else elevatorPID.setGoal(2);
+    double output = elevatorPID.calculate(sim.getPositionMeters());
+    output += elevatorFF.calculate(elevatorPID.getSetpoint().velocity);
+    
+    sim.setInputVoltage(output);
+    sim.update(0.02);
+    m_elevatorMech2d.setLength(sim.getPositionMeters());
 
-    if (m_robotContainer.driveController.x().getAsBoolean()) {
-      elevatorMotor.set(0.2);
-      target =  new SwerveModuleState(MetersPerSecond.of(1), Rotation2d.kZero);
-    }else if (m_robotContainer.driveController.y().getAsBoolean()) {
-      elevatorMotor.set(-0.2);
-      target =  new SwerveModuleState(MetersPerSecond.of(0), Rotation2d.k180deg);
-    } else {
-      elevatorMotor.set(0);
-    }
+    if (m_robotContainer.driveController.b().getAsBoolean()) armPID.setGoal(Units.degreesToRadians(45));
+    else if (m_robotContainer.driveController.x().getAsBoolean()) armPID.setGoal(Units.degreesToRadians(180));
+    else armPID.setGoal(Units.degreesToRadians(90));
+    double armOutput = armPID.calculate(armSim.getAngleRads());
+    armOutput += armFF.calculate(armPID.getSetpoint().position, armPID.getSetpoint().velocity);
 
-    // if (runToPosition) {
-      //m_robotContainer.drive.setSwerveStates(target);
-    // }
+    armSim.setInputVoltage(armOutput);
+    armSim.update(0.02);
+    armMech2d.setAngle(Units.radiansToDegrees(armSim.getAngleRads()) - 90);
+    SmartDashboard.putNumber("Arm Error", Units.radiansToDegrees(armPID.getPositionError()));
   }
 
   @Override
