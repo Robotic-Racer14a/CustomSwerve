@@ -56,9 +56,9 @@ public class SwervePod extends SubsystemBase{
     // Gains are for example purposes only - must be determined for your own robot!
     private final ProfiledPIDController m_turningPIDController =
         new ProfiledPIDController(
-            1.4,
+            8,
             0,
-            0,
+            1,
             new TrapezoidProfile.Constraints(
                  kModuleMaxAngularVelocity, kModuleMaxAngularAcceleration));
     
@@ -79,7 +79,7 @@ public class SwervePod extends SubsystemBase{
         driveMotorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         driveMotorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         driveMotorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-        driveMotorConfig.Slot0.kP = 100;
+        driveMotorConfig.Slot0.kP = 0.5;
         driveMotorConfig.Slot0.kI = 0;
         driveMotorConfig.Slot0.kD = 0;
         driveMotorConfig.Slot0.kS = 0;

@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
+import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.hardware.Pigeon2;
 
 import edu.wpi.first.math.VecBuilder;
@@ -10,8 +11,10 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
@@ -75,6 +78,19 @@ public class DriveSubsystem extends SubsystemBase{
                 m_backRight.getPosition()
             });
 
+        if (Utils.isSimulation()) {
+            var simRotSpeed = m_kinematics.toChassisSpeeds(
+                m_frontLeft.getState(),
+                m_frontRight.getState(),
+                m_backLeft.getState(),
+                m_backRight.getState()
+            ).omegaRadiansPerSecond;
+
+            m_gyro.getSimState().setAngularVelocityZ(simRotSpeed);
+            m_gyro.getSimState().addYaw(Units.radiansToDegrees(simRotSpeed) * 0.02);
+
+        }
+
         robotPosePublisher.set(getCurrentPose());
         SmartDashboard.putNumber("Current Velo", getCurrentVelocity());
         statesPublisher.set(new SwerveModuleState[] {
@@ -86,10 +102,6 @@ public class DriveSubsystem extends SubsystemBase{
     }
 
     public Pose2d getCurrentPose() {
-        m_kinematics.toChassisSpeeds(m_frontLeft.getState(),
-                m_frontRight.getState(),
-                m_backLeft.getState(),
-                m_backRight.getState());
         return currentPoseEstimator.getEstimatedPosition();
     }
 

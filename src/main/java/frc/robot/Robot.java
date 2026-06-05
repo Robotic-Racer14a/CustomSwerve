@@ -59,7 +59,7 @@ public class Robot extends TimedRobot {
     // the main mechanism object
     Mechanism2d mech = new Mechanism2d(3, 3);
     // the mechanism root node
-    MechanismRoot2d root = mech.getRoot("climber", 2, 0);
+    MechanismRoot2d root = mech.getRoot("climber", 1.5, 0);
 
     // MechanismLigament2d objects represent each "section"/"stage" of the mechanism, and are based
     // off the root node or another ligament object
