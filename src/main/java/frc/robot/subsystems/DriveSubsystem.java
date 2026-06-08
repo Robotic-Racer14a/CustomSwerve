@@ -23,8 +23,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class DriveSubsystem extends SubsystemBase{
 
-    public static final double kMaxSpeed = 4.0; // 3 meters per second
-    public static final double kMaxAngularSpeed = Math.PI * 8; // 1/2 rotation per second
+    public static final double kMaxSpeed = 3.1; // 3 meters per second
+    public static final double kMaxAngularSpeed = Math.PI * 2; // 1/2 rotation per second
 
     private final Translation2d m_frontLeftLocation = new Translation2d(Meter.convertFrom(10.25, Inch), Meter.convertFrom(10.25, Inch));
     private final Translation2d m_frontRightLocation = new Translation2d(Meter.convertFrom(10.25, Inch), -Meter.convertFrom(10.25, Inch));
@@ -46,15 +46,15 @@ public class DriveSubsystem extends SubsystemBase{
     new SwerveDrivePoseEstimator(
         m_kinematics, m_gyro.getRotation2d(), 
         new SwerveModulePosition[] {
-                m_frontLeft.getPosition(),
-                m_frontRight.getPosition(),
-                m_backLeft.getPosition(),
-                m_backRight.getPosition()
-            }, 
-            Pose2d.kZero,
-            VecBuilder.fill(0.05, 0.05, 0.05),
-            VecBuilder.fill(0.5, 0.5, 0.5)
-            );
+            m_frontLeft.getPosition(),
+            m_frontRight.getPosition(),
+            m_backLeft.getPosition(),
+            m_backRight.getPosition()
+        }, 
+        Pose2d.kZero,
+        VecBuilder.fill(0.05, 0.05, 0.05),
+        VecBuilder.fill(0.5, 0.5, 0.5)
+    );
     
     StructPublisher<Pose2d> robotPosePublisher = NetworkTableInstance.getDefault()
         .getStructTopic("Robot Pose", Pose2d.struct).publish();
