@@ -60,10 +60,8 @@ public class ElevatorSubsystem extends SubsystemBase{
 
 
 
-    public void initializeVisualisation() {
-        var mech = (Mechanism2d) SmartDashboard.getData("Mech2d");
-        mech.getRoot("elevator", 2, 0).append(elevatorMech);
-        SmartDashboard.putData("Mech2d", mech);
+    public MechanismLigament2d getMechanism() {
+        return elevatorMech;
     }
 
 
@@ -91,7 +89,7 @@ public class ElevatorSubsystem extends SubsystemBase{
 
 
 
-    
+
 
     public void updateSimState(double dtSeconds, double supplyVoltage) {
         elevatorMotor.getSimState().setSupplyVoltage(supplyVoltage);

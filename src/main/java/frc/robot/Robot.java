@@ -5,6 +5,7 @@
 package frc.robot;
 
 
+import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
@@ -12,6 +13,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.DriveSubsystem;
+import frc.robot.subsystems.superstructue.ArmSubsystem;
 import frc.robot.subsystems.superstructue.ElevatorSubsystem;
 
 public class Robot extends TimedRobot {
@@ -19,11 +21,14 @@ public class Robot extends TimedRobot {
 
   final DriveSubsystem drive = new DriveSubsystem();
   ElevatorSubsystem elevator = new ElevatorSubsystem();
+  ArmSubsystem arm = new ArmSubsystem();
   final CommandXboxController driveController = new CommandXboxController(0);
 
   public Robot() {
-    SmartDashboard.putData("Mech2d", new Mechanism2d(3, 3));
-    elevator.initializeVisualisation();
+    var mech = new Mechanism2d(3, 3);
+    var mechRoot = mech.getRoot("Elevator", 2, 0);
+    mechRoot.append(elevator.getMechanism()).append(arm.getMechanism());
+    SmartDashboard.putData("Mech2d", mech);
   }
 
   @Override
@@ -62,6 +67,12 @@ public class Robot extends TimedRobot {
       elevator.setTarget(200);
     } else {
       elevator.setTarget(100);
+    }
+
+    if (driveController.b().getAsBoolean()) {
+      arm.setTarget(90);
+    } else {
+      arm.setTarget(0);
     }
   }
 
