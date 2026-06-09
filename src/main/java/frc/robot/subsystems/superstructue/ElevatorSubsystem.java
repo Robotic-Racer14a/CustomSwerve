@@ -72,9 +72,9 @@ public class ElevatorSubsystem extends SubsystemBase{
     public double getTarget(States targetState) {
         switch (targetState) {
             case LEVEL_ONE:
-                return 1.2;
+                return 0.6;
             case LEVEL_TWO:
-                return 2.0;
+                return 1.2;
             default:
                 return 0.5;
         }

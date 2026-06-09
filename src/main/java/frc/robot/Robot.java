@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
@@ -41,8 +43,8 @@ public class Robot extends TimedRobot {
 
     
     var statics = new Mechanism2d(2, 3);
-    statics.getRoot("Branch1", 0, 0.75).append(new MechanismLigament2d("Branch", 0.7, 45));
-    statics.getRoot("Branch2", 0, 1.5).append(new MechanismLigament2d("Branch", 0.7, 45));
+    statics.getRoot("Branch1", 0, Units.inchesToMeters(21.875) - 0.4).append(new MechanismLigament2d("Branch", 0.7, 35));
+    statics.getRoot("Branch2", 0, Units.inchesToMeters(47.625) - 0.4).append(new MechanismLigament2d("Branch", 0.7, 35));
     SmartDashboard.putData("Mech2d", mech);
     SmartDashboard.putData("Statics", statics);
   }
@@ -81,6 +83,28 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
+    final var xSpeed =
+            -MathUtil.applyDeadband(driveController.getLeftY(), 0.02)
+                * DriveSubsystem.kMaxSpeed;
+
+        // Get the y speed or sideways/strafe speed. We are inverting this because
+        // we want a positive value when we pull to the left. Xbox controllers
+        // return positive values when you pull to the right by default.
+        final var ySpeed =
+            -MathUtil.applyDeadband(driveController.getLeftX(), 0.02)
+                * DriveSubsystem.kMaxSpeed;
+
+        // Get the rate of angular rotation. We are inverting this because we want a
+        // positive value when we pull to the left (remember, CCW is positive in
+        // mathematics). Xbox controllers return positive values when you pull to
+        // the right by default.
+        final var rot =
+            -MathUtil.applyDeadband(driveController.getRightX(), 0.02)
+                * DriveSubsystem.kMaxAngularSpeed;
+
+        drive.drive(xSpeed, ySpeed, rot, this.getPeriod());
+
+
     if (driveController.a().getAsBoolean()) {
       targetState = States.LEVEL_ONE;
     } else if (driveController.b().getAsBoolean()) {
