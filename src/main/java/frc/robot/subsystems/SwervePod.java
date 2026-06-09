@@ -4,7 +4,6 @@ import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
-import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.CANcoder;
@@ -12,7 +11,6 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -29,11 +27,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 public class SwervePod extends SubsystemBase{
 
     private static final double kDriveRotationsPerMeter = 10 / (Units.inchesToMeters(2) * 2 * Math.PI);
-  
-    
-    private static final double kModuleMaxAngularVelocity = DriveSubsystem.kMaxAngularSpeed;
-    private static final double kModuleMaxAngularAcceleration =
-        4 * 2 * Math.PI; // radians per second squared
     
     private final TalonFX driveMotor, turnMotor;
     private final CANcoder canCoder;
