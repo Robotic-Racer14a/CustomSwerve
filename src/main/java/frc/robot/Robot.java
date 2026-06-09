@@ -9,6 +9,7 @@ import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -18,22 +19,41 @@ import frc.robot.subsystems.superstructue.ElevatorSubsystem;
 
 public class Robot extends TimedRobot {
 
+  public static enum States {
+    STOW,
+    LEVEL_ONE,
+    LEVEL_TWO
+  }
+
+  public static States targetState = States.STOW;
+
 
   final DriveSubsystem drive = new DriveSubsystem();
   ElevatorSubsystem elevator = new ElevatorSubsystem();
   ArmSubsystem arm = new ArmSubsystem();
   final CommandXboxController driveController = new CommandXboxController(0);
 
+  public static boolean armClear = false;
+  public static boolean elevatorAtTarget = false;
+
   public Robot() {
-    var mech = new Mechanism2d(3, 3);
-    var mechRoot = mech.getRoot("Elevator", 2, 0);
+    var mech = new Mechanism2d(2, 3);
+    var mechRoot = mech.getRoot("Elevator", 1, 0);
     mechRoot.append(elevator.getMechanism()).append(arm.getMechanism());
+
+    
+    var statics = new Mechanism2d(2, 3);
+    statics.getRoot("Branch1", 0, 0.75).append(new MechanismLigament2d("Branch", 0.7, 45));
+    statics.getRoot("Branch2", 0, 1.5).append(new MechanismLigament2d("Branch", 0.7, 45));
     SmartDashboard.putData("Mech2d", mech);
+    SmartDashboard.putData("Statics", statics);
   }
 
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
+    armClear = arm.isArmClearOfBranch();
+    elevatorAtTarget = elevator.isElevatorAtTarget();
   }
 
   @Override
@@ -64,16 +84,12 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     if (driveController.a().getAsBoolean()) {
-      elevator.setTarget(200);
-    } else {
-      elevator.setTarget(100);
-    }
-
-    if (driveController.b().getAsBoolean()) {
-      arm.setTarget(90);
-    } else {
-      arm.setTarget(0);
-    }
+      targetState = States.LEVEL_ONE;
+    } else if (driveController.b().getAsBoolean()) {
+      targetState = States.LEVEL_TWO;
+    } else if (driveController.x().getAsBoolean()) {
+      targetState = States.STOW;
+    } 
   }
 
   @Override

@@ -15,10 +15,12 @@ import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Robot;
+import frc.robot.Robot.States;
 
 public class ElevatorSubsystem extends SubsystemBase{
     TalonFX elevatorMotor = new TalonFX(20);
-    ProfiledPIDController elevatorPID = new ProfiledPIDController(0, 0, 0, new TrapezoidProfile.Constraints(100, 100));
+    ProfiledPIDController elevatorPID = new ProfiledPIDController(0, 0, 0, new TrapezoidProfile.Constraints(3, 2));
     ElevatorFeedforward elevatorFF = new ElevatorFeedforward(0, 0, 0);
 
     DCMotorSim elevatorMotorSim = new DCMotorSim(
@@ -43,16 +45,20 @@ public class ElevatorSubsystem extends SubsystemBase{
 
     @Override
     public void periodic() {
-        runToTarget();
-        elevatorMech.setLength(getCurrent() * 0.01);
+        setTarget(getTarget(Robot.targetState));
+
+        if(!isElevatorAtTarget() && !Robot.armClear) setTarget(getCurrent());
+        else runToTarget();
+
+        elevatorMech.setLength(getCurrent());
     }
 
     @Override
     public void simulationPeriodic() {
-        elevatorPID.setPID(2, 0, 0.1);
+        elevatorPID.setPID(100, 0, 10);
         elevatorFF.setKs(0);
         elevatorFF.setKg(0);
-        elevatorFF.setKv(0.13);
+        elevatorFF.setKv(7);
         updateSimState(0.02, RobotController.getBatteryVoltage());
     }
 
@@ -65,10 +71,20 @@ public class ElevatorSubsystem extends SubsystemBase{
     }
 
 
+    public double getTarget(States targetState) {
+        switch (targetState) {
+            case LEVEL_ONE:
+                return 1.2;
+            case LEVEL_TWO:
+                return 2.0;
+            default:
+                return 0.5;
+        }
+    }
 
 
     public double getCurrent() {
-        return elevatorMotor.getPosition().getValueAsDouble();
+        return elevatorMotor.getPosition().getValueAsDouble() * 0.01;
     }
 
     public void setTarget(double target) {
@@ -88,6 +104,9 @@ public class ElevatorSubsystem extends SubsystemBase{
     }
 
 
+    public boolean isElevatorAtTarget() {
+        return Math.abs(getCurrent() - getTarget(Robot.targetState)) < .5;
+    }
 
 
 

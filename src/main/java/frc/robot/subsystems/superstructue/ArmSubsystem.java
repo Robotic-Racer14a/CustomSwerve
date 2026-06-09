@@ -2,6 +2,8 @@ package frc.robot.subsystems.superstructue;
 
 import static edu.wpi.first.units.Units.*;
 
+import java.lang.annotation.Target;
+
 import com.ctre.phoenix6.hardware.TalonFX;
 
 import edu.wpi.first.math.controller.ArmFeedforward;
@@ -19,6 +21,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Robot;
+import frc.robot.Robot.States;
 
 public class ArmSubsystem extends SubsystemBase{
     TalonFX armMotor = new TalonFX(21);
@@ -47,7 +51,14 @@ public class ArmSubsystem extends SubsystemBase{
 
     @Override
     public void periodic() {
+
+        setTarget(getTarget(Robot.targetState));
+        if (!Robot.elevatorAtTarget) setTarget(0);
+
         runToTarget();
+
+
+
         armMech.setAngle(getCurrent() * 1);
     }
 
@@ -69,6 +80,16 @@ public class ArmSubsystem extends SubsystemBase{
     }
 
 
+    public double getTarget(States targetState) {
+        switch (targetState) {
+            case LEVEL_ONE:
+                return 90;
+            case LEVEL_TWO:
+                return 90;
+            default:
+                return 0;
+        }
+    }
 
 
     public double getCurrent() {
@@ -92,6 +113,9 @@ public class ArmSubsystem extends SubsystemBase{
     }
 
 
+    public boolean isArmClearOfBranch() {
+        return getCurrent() < 30 && getCurrent() > -10;
+    }
 
     
 
