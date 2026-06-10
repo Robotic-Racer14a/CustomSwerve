@@ -59,10 +59,12 @@ public class Superstructure extends SubsystemBase {
 
         double offsetAngle = Math.atan2(y, x);
 
-        double baseAngle = Math.acos((Math.pow(TOP_ARM_LENGTH, 2) + Math.pow(distance, 2) - Math.pow(BOTTOM_ARM_LENGTH, 2)) / (2 * TOP_ARM_LENGTH * distance)) + offsetAngle;
+        double baseAngle = Math.acos((Math.pow(TOP_ARM_LENGTH, 2) + Math.pow(distance, 2) - Math.pow(BOTTOM_ARM_LENGTH, 2)) / (2 * TOP_ARM_LENGTH * distance));
         double topAngle = Math.acos((Math.pow(BOTTOM_ARM_LENGTH, 2) + Math.pow(TOP_ARM_LENGTH, 2) - Math.pow(distance, 2)) / (2 * BOTTOM_ARM_LENGTH * TOP_ARM_LENGTH));
+        if (Units.radiansToDegrees(offsetAngle) > 90) {baseAngle = offsetAngle - baseAngle; topAngle = (-topAngle + Math.PI);}
+        else {baseAngle += offsetAngle; topAngle = -(Math.PI - topAngle);}
 
-        topArm.setTarget(-(180 - Units.radiansToDegrees(topAngle)));
+        topArm.setTarget(Units.radiansToDegrees(topAngle));
         bottomArm.setTarget(Units.radiansToDegrees(baseAngle));
     }
 
