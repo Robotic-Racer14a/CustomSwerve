@@ -17,8 +17,8 @@ import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class ArmSubsystem extends SubsystemBase{
-    TalonFX armMotor = new TalonFX(20);
+public class TopArmSubsystem extends SubsystemBase{
+    TalonFX armMotor = new TalonFX(21);
     ProfiledPIDController armPID = new ProfiledPIDController(0, 0, 0, new TrapezoidProfile.Constraints(200, 200));
     ArmFeedforward armFF = new ArmFeedforward(0, 0, 0);
 
@@ -29,13 +29,13 @@ public class ArmSubsystem extends SubsystemBase{
         DCMotor.getKrakenX60Foc(1)
         );
 
-    MechanismLigament2d armMech = new MechanismLigament2d("arm", Units.inchesToMeters(25), -90, 10, new Color8Bit(Color.kBlue));
+    MechanismLigament2d armMech = new MechanismLigament2d("arm", Units.inchesToMeters(25), -90, 10, new Color8Bit(Color.kRed));
 
 
 
 
 
-    public ArmSubsystem() {
+    public TopArmSubsystem() {
     }
 
 
@@ -47,9 +47,7 @@ public class ArmSubsystem extends SubsystemBase{
 
         runToTarget();
 
-
-
-        armMech.setAngle(getCurrent() * 1);
+        armMech.setAngle(getCurrent());
     }
 
     @Override
@@ -70,9 +68,8 @@ public class ArmSubsystem extends SubsystemBase{
     }
 
 
-
     public double getCurrent() {
-        return armMotor.getPosition().getValueAsDouble() * 0.5;
+        return armMotor.getPosition().getValueAsDouble();
     }
 
     public void setTarget(double target) {
@@ -91,6 +88,7 @@ public class ArmSubsystem extends SubsystemBase{
         setVoltage(output);
     }
 
+    
 
     public void updateSimState(double dtSeconds, double supplyVoltage) {
         armMotor.getSimState().setSupplyVoltage(supplyVoltage);
