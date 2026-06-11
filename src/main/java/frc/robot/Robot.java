@@ -16,44 +16,30 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.superstructue.ArmSubsystem;
 import frc.robot.subsystems.superstructue.ElevatorSubsystem;
+import frc.robot.subsystems.superstructue.Superstructure;
+import frc.robot.subsystems.superstructue.Superstructure.States;
 
 public class Robot extends TimedRobot {
 
-  public static enum States {
-    STOW,
-    LEVEL_ONE,
-    LEVEL_TWO
-  }
-
-  public static States targetState = States.STOW;
-
-
   final DriveSubsystem drive = new DriveSubsystem();
-  ElevatorSubsystem elevator = new ElevatorSubsystem();
-  ArmSubsystem arm = new ArmSubsystem();
+  Superstructure superstructure = new Superstructure();
   final CommandXboxController driveController = new CommandXboxController(0);
 
   public static boolean armClear = false;
   public static boolean elevatorAtTarget = false;
 
   public Robot() {
-    var mech = new Mechanism2d(2, 3);
-    var mechRoot = mech.getRoot("Elevator", 1, 0);
-    mechRoot.append(elevator.getMechanism()).append(arm.getMechanism());
 
     
     var statics = new Mechanism2d(2, 3);
     statics.getRoot("Branch1", 0, Units.inchesToMeters(21.875) - 0.4).append(new MechanismLigament2d("Branch", 0.7, 35));
     statics.getRoot("Branch2", 0, Units.inchesToMeters(47.625) - 0.4).append(new MechanismLigament2d("Branch", 0.7, 35));
-    SmartDashboard.putData("Mech2d", mech);
     SmartDashboard.putData("Statics", statics);
   }
 
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
-    armClear = arm.isArmClearOfBranch();
-    elevatorAtTarget = elevator.isElevatorAtTarget();
   }
 
   @Override
@@ -106,11 +92,13 @@ public class Robot extends TimedRobot {
 
 
     if (driveController.a().getAsBoolean()) {
-      targetState = States.LEVEL_ONE;
+      superstructure.setTargetState(States.LEVEL_THREE);
     } else if (driveController.b().getAsBoolean()) {
-      targetState = States.LEVEL_TWO;
+      superstructure.setTargetState(States.LEVEL_TWO);
     } else if (driveController.x().getAsBoolean()) {
-      targetState = States.STOW;
+      superstructure.setTargetState(States.PICKUP);
+    } else if (driveController.y().getAsBoolean()) {
+      superstructure.setTargetState(States.STOW);
     } 
   }
 

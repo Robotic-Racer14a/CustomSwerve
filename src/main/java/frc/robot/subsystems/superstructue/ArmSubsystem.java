@@ -16,8 +16,6 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Robot;
-import frc.robot.Robot.States;
 
 public class ArmSubsystem extends SubsystemBase{
     TalonFX armMotor = new TalonFX(21);
@@ -33,7 +31,7 @@ public class ArmSubsystem extends SubsystemBase{
 
     MechanismLigament2d armMech = new MechanismLigament2d("arm", Units.inchesToMeters(18), -90, 10, new Color8Bit(Color.kBlue));
 
-
+    double targetAngle = 0;
 
 
 
@@ -46,14 +44,6 @@ public class ArmSubsystem extends SubsystemBase{
 
     @Override
     public void periodic() {
-
-        setTarget(getTarget(Robot.targetState));
-        if (!Robot.elevatorAtTarget) setTarget(0);
-
-        runToTarget();
-
-
-
         armMech.setAngle(getCurrent() * 1);
     }
 
@@ -75,23 +65,12 @@ public class ArmSubsystem extends SubsystemBase{
     }
 
 
-    public double getTarget(States targetState) {
-        switch (targetState) {
-            case LEVEL_ONE:
-                return 90;
-            case LEVEL_TWO:
-                return 90;
-            default:
-                return 0;
-        }
-    }
-
-
     public double getCurrent() {
         return armMotor.getPosition().getValueAsDouble();
     }
 
     public void setTarget(double target) {
+        targetAngle = target;
         armPID.setGoal(target);
     }
 
@@ -107,11 +86,9 @@ public class ArmSubsystem extends SubsystemBase{
         setVoltage(output);
     }
 
-
-    public boolean isArmClearOfBranch() {
-        return getCurrent() < 30 && getCurrent() > -10;
+    public boolean isArmAtTarget() {
+        return Math.abs(getCurrent() - targetAngle) < 5;
     }
-
     
 
     public void updateSimState(double dtSeconds, double supplyVoltage) {

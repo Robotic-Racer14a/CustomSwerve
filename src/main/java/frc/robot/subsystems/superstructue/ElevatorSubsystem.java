@@ -13,8 +13,6 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Robot;
-import frc.robot.Robot.States;
 
 public class ElevatorSubsystem extends SubsystemBase{
     TalonFX elevatorMotor = new TalonFX(20);
@@ -30,11 +28,13 @@ public class ElevatorSubsystem extends SubsystemBase{
 
     MechanismLigament2d elevatorMech = new MechanismLigament2d("elevator", 1, 90);
 
+    double target = 0;
 
 
 
 
     public ElevatorSubsystem() {
+        elevatorPID.setTolerance(0.3, 2);
     }
 
 
@@ -43,11 +43,6 @@ public class ElevatorSubsystem extends SubsystemBase{
 
     @Override
     public void periodic() {
-        setTarget(getTarget(Robot.targetState));
-
-        if(!isElevatorAtTarget() && !Robot.armClear) setTarget(getCurrent());
-        else runToTarget();
-
         elevatorMech.setLength(getCurrent());
     }
 
@@ -69,23 +64,12 @@ public class ElevatorSubsystem extends SubsystemBase{
     }
 
 
-    public double getTarget(States targetState) {
-        switch (targetState) {
-            case LEVEL_ONE:
-                return 0.6;
-            case LEVEL_TWO:
-                return 1.2;
-            default:
-                return 0.5;
-        }
-    }
-
-
     public double getCurrent() {
         return elevatorMotor.getPosition().getValueAsDouble() * 0.01;
     }
 
     public void setTarget(double target) {
+        this.target = target;
         elevatorPID.setGoal(target);
     }
 
@@ -101,12 +85,9 @@ public class ElevatorSubsystem extends SubsystemBase{
         setVoltage(output);
     }
 
-
     public boolean isElevatorAtTarget() {
-        return Math.abs(getCurrent() - getTarget(Robot.targetState)) < .5;
+        return Math.abs(target - getCurrent()) < 0.2;
     }
-
-
 
     public void updateSimState(double dtSeconds, double supplyVoltage) {
         elevatorMotor.getSimState().setSupplyVoltage(supplyVoltage);
