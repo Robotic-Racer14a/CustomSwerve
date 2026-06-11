@@ -93,7 +93,7 @@ public class Robot extends TimedRobot {
     } else if (driveController.b().getAsBoolean()) {
       superstructure.setTargetState(Superstructure.States.MID);
     } else if (driveController.x().getAsBoolean()) {
-      superstructure.setTargetState(Superstructure.States.PICKUP);
+      superstructure.setTargetState(Superstructure.States.LOW);
     } else if (driveController.y().getAsBoolean()) {
       superstructure.setTargetState(Superstructure.States.STOW);
     } 

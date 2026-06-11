@@ -21,7 +21,7 @@ public class ArmSubsystem extends SubsystemBase{
     TalonFX armMotor = new TalonFX(20);
     ProfiledPIDController armPID = new ProfiledPIDController(0, 0, 0, new TrapezoidProfile.Constraints(200, 200));
     ArmFeedforward armFF = new ArmFeedforward(0, 0, 0);
-    double BOTTOM_ARM_LENGTH = Units.inchesToMeters(35);
+    double BOTTOM_ARM_LENGTH = Units.inchesToMeters(30);
 
     DCMotorSim armMotorSim = new DCMotorSim(
         LinearSystemId.createDCMotorSystem(

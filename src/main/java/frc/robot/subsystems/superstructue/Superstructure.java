@@ -17,7 +17,7 @@ public class Superstructure extends SubsystemBase {
         STOW
     }
 
-    double ARM_MOUNT_Y = Units.inchesToMeters(27);
+    double ARM_MOUNT_Y = Units.inchesToMeters(20);
     double ARM_MOUNT_X = Units.inchesToMeters(11);
     boolean enableIntermediateStow = false;
     
