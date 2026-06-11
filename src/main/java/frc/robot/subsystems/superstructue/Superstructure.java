@@ -38,7 +38,7 @@ public class Superstructure extends SubsystemBase {
     @Override
     public void periodic() {
 
-        if ((previousState == States.MID && targetState == States.HIGH) || (previousState == States.HIGH && targetState == States.MID)) {
+        if (goToIntermediateStep()) {
             tempTarget = targetState;
             targetState = States.INTERMEDIATE;
         } else if (targetState == States.INTERMEDIATE && previousState == States.INTERMEDIATE) {
@@ -84,6 +84,10 @@ public class Superstructure extends SubsystemBase {
         }
         topArm.runToTarget();
         bottomArm.runToTarget();
+    }
+
+    public boolean goToIntermediateStep() {
+        return previousState != States.INTERMEDIATE && (targetState == States.MID || targetState == States.HIGH) && targetState != previousState;
     }
 
     public void setTargetState(States newTarget) {
