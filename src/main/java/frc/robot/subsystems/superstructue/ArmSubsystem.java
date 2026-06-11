@@ -21,6 +21,7 @@ public class ArmSubsystem extends SubsystemBase{
     TalonFX armMotor = new TalonFX(20);
     ProfiledPIDController armPID = new ProfiledPIDController(0, 0, 0, new TrapezoidProfile.Constraints(200, 200));
     ArmFeedforward armFF = new ArmFeedforward(0, 0, 0);
+    double BOTTOM_ARM_LENGTH = Units.inchesToMeters(35);
 
     DCMotorSim armMotorSim = new DCMotorSim(
         LinearSystemId.createDCMotorSystem(
@@ -29,7 +30,7 @@ public class ArmSubsystem extends SubsystemBase{
         DCMotor.getKrakenX60Foc(1)
         );
 
-    MechanismLigament2d armMech = new MechanismLigament2d("arm", Units.inchesToMeters(25), -90, 10, new Color8Bit(Color.kBlue));
+    MechanismLigament2d armMech = new MechanismLigament2d("arm", BOTTOM_ARM_LENGTH, -90, 10, new Color8Bit(Color.kBlue));
 
 
 
@@ -44,17 +45,12 @@ public class ArmSubsystem extends SubsystemBase{
 
     @Override
     public void periodic() {
-
-        runToTarget();
-
-
-
-        armMech.setAngle(getCurrent() * 1);
+        armMech.setAngle(getCurrent() - 90);
     }
 
     @Override
     public void simulationPeriodic() {
-        armPID.setPID(1, 0, 0.2);
+        armPID.setPID(2, 0, 0.2);
         armFF.setKs(0);
         armFF.setKg(0);
         armFF.setKv(0.15);
