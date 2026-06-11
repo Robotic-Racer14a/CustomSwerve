@@ -11,6 +11,7 @@ public class Superstructure extends SubsystemBase {
     public static enum States {
         HIGH,
         MID,
+        LOW, 
         PICKUP,
         INTERMEDIATE,
         STOW
@@ -54,27 +55,32 @@ public class Superstructure extends SubsystemBase {
                 enableIntermediateStow = true;
                 setTargetAngles(Units.inchesToMeters(41), Units.inchesToMeters(34)); 
                 break;
+            case LOW:
+                enableIntermediateStow = true;
+                setTargetAngles(Units.inchesToMeters(30), Units.inchesToMeters(20)); 
+                break;
             case INTERMEDIATE:
                 enableIntermediateStow = true;
-                setTargetAngles(Units.inchesToMeters(37), Units.inchesToMeters(52));
+                setTargetAngles(Units.inchesToMeters(30), Units.inchesToMeters(52));
                 break;
             case PICKUP:
                 enableIntermediateStow = true;
-                setTargetAngles(Units.inchesToMeters(-30), Units.inchesToMeters(40));
+                setTargetAngles(Units.inchesToMeters(-40), Units.inchesToMeters(40));
                 break;
             default:
                 if (enableIntermediateStow) {
-                    boolean moveBottom = true;
-                    topArm.setTarget(topArm.getCurrent());
-                    bottomArm.setTarget(90);
+                    boolean moveBottom = bottomArm.getCurrent() < 80 || bottomArm.getCurrent() > 100, moveTop = topArm.getCurrent() < -90;
 
-                    if (topArm.getCurrent() < -90) {
-                        moveBottom = false;
+                    if (moveTop) {
                         topArm.setTarget(-90);
-                        bottomArm.setTarget(bottomArm.getCurrent());
                     }
 
-                    if ((Math.abs(bottomArm.getCurrent() - 90) < 5 && moveBottom) || ((Math.abs(-90 - topArm.getCurrent()) < 5) && !moveBottom)) enableIntermediateStow = false;
+                    
+                    if (moveBottom) {
+                        bottomArm.setTarget(90);
+                    }
+
+                    if ((Math.abs(bottomArm.getCurrent() - 90) < 5 || !moveBottom) && ((Math.abs(-90 - topArm.getCurrent()) < 5) || !moveTop)) enableIntermediateStow = false;
                 } else {
                     previousState = States.STOW;
                     topArm.setTarget(-150);
@@ -87,7 +93,7 @@ public class Superstructure extends SubsystemBase {
     }
 
     public boolean goToIntermediateStep() {
-        return previousState != States.INTERMEDIATE && (targetState == States.MID || targetState == States.HIGH) && targetState != previousState;
+        return previousState != States.INTERMEDIATE && (targetState == States.LOW || targetState == States.MID || targetState == States.HIGH) && targetState != previousState;
     }
 
     public void setTargetState(States newTarget) {
