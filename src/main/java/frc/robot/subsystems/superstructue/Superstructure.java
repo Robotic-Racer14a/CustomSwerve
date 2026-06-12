@@ -18,7 +18,7 @@ public class Superstructure extends SubsystemBase{
         STOW
     }
 
-    double MOUNT_X = Units.inchesToMeters(5), MOUNT_Y = Units.inchesToMeters(12);
+    double MOUNT_X = Units.inchesToMeters(-10), MOUNT_Y = Units.inchesToMeters(15);
     
     ArmSubsystem arm = new ArmSubsystem();
     ElevatorSubsystem elevator = new ElevatorSubsystem();
@@ -42,21 +42,28 @@ public class Superstructure extends SubsystemBase{
         mechLig.setLength(elevator.getCurrent());
         mechLig.setAngle(arm.getCurrent());
 
+        if ((targetState == States.LEVEL_THREE || targetState == States.LEVEL_TWO) && previousState != targetState && previousState != States.INTERMEDIATE) {
+            tempState = targetState;
+            targetState = States.INTERMEDIATE;
+        } else if (previousState == States.INTERMEDIATE && targetState == States.INTERMEDIATE) {
+            targetState = tempState;
+        }
+
         switch (targetState) {
             case LEVEL_THREE:
-                setTargets(1, 5);
+                setTargets(Units.inchesToMeters(57), Units.inchesToMeters(46));
                 break;
             case LEVEL_TWO:
-                setTargets(0.75, 1);
+                setTargets(Units.inchesToMeters(41), Units.inchesToMeters(34));
                 break;
             case PICKUP:
-                setTargets(0.5, 2);
+                setTargets(Units.inchesToMeters(-40), Units.inchesToMeters(40));
                 break;
             case INTERMEDIATE:
-                setTargets(0.5, 2);
+                setTargets(Units.inchesToMeters(41), Units.inchesToMeters(46));
                 break;
             default:
-                setTargets(0.75, 0.1);
+                setTargets(Units.inchesToMeters(10), Units.inchesToMeters(5));
                 break;
         }
 
@@ -67,8 +74,15 @@ public class Superstructure extends SubsystemBase{
         SmartDashboard.putString("Target State", targetState.toString());
         SmartDashboard.putString("Previous State", previousState.toString());
 
+        if (!arm.isArmAtTarget(20) && arm.getCurrent() > 0) {
+            elevator.setTarget(elevator.getCurrent() > 1.0 ? 1.0 : elevator.getCurrent());
+            if (!elevator.isElevatorAtTarget()) {
+                arm.setTarget(arm.getCurrent());
+            }
+        }
+
         elevator.runToTarget();
-        arm.runToTarget();
+        arm.runToTarget(elevator.getCurrent());
     }
 
     public void setTargetState(States newTarget) {
