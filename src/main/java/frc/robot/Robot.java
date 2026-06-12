@@ -14,8 +14,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.DriveSubsystem;
-import frc.robot.subsystems.superstructue.ArmSubsystem;
-import frc.robot.subsystems.superstructue.ElevatorSubsystem;
 import frc.robot.subsystems.superstructue.Superstructure;
 import frc.robot.subsystems.superstructue.Superstructure.States;
 
