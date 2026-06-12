@@ -32,7 +32,7 @@ public class Superstructure extends SubsystemBase{
     public Superstructure() {
 
         var mech = new Mechanism2d(4, 3);
-        var mechRoot = mech.getRoot("Elevator", 1 + MOUNT_X, MOUNT_Y);
+        var mechRoot = mech.getRoot("Elevator", 2 + MOUNT_X, MOUNT_Y);
         mechRoot.append(mechLig);
         SmartDashboard.putData("Mech2d", mech);
     }
