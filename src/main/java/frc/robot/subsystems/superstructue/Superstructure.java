@@ -1,7 +1,11 @@
 package frc.robot.subsystems.superstructue;
 
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Superstructure extends SubsystemBase{
@@ -13,9 +17,13 @@ public class Superstructure extends SubsystemBase{
         INTERMEDIATE,
         STOW
     }
+
+    double MOUNT_X = Units.inchesToMeters(5), MOUNT_Y = Units.inchesToMeters(12);
     
     ArmSubsystem arm = new ArmSubsystem();
     ElevatorSubsystem elevator = new ElevatorSubsystem();
+
+    MechanismLigament2d mechLig = new MechanismLigament2d("arm", Units.inchesToMeters(18), 0, 10, new Color8Bit(Color.kBlue));
 
     States tempState = States.STOW;
     States targetState = States.STOW;
@@ -23,42 +31,32 @@ public class Superstructure extends SubsystemBase{
 
     public Superstructure() {
 
-        var mech = new Mechanism2d(2, 3);
-        var mechRoot = mech.getRoot("Elevator", 1, 0);
-        mechRoot.append(elevator.getMechanism()).append(arm.getMechanism());
+        var mech = new Mechanism2d(4, 3);
+        var mechRoot = mech.getRoot("Elevator", 1 + MOUNT_X, MOUNT_Y);
+        mechRoot.append(mechLig);
         SmartDashboard.putData("Mech2d", mech);
     }
 
     @Override
     public void periodic() {
-
-        if ((targetState == States.LEVEL_THREE || targetState == States.LEVEL_TWO) && previousState != targetState && previousState != States.INTERMEDIATE) {
-            tempState = targetState;
-            targetState = States.INTERMEDIATE;
-        } else if (previousState == States.INTERMEDIATE && targetState == States.INTERMEDIATE) {
-            targetState = tempState;
-        }
+        mechLig.setLength(elevator.getCurrent());
+        mechLig.setAngle(arm.getCurrent());
 
         switch (targetState) {
             case LEVEL_THREE:
-                elevator.setTarget(2);
-                arm.setTarget(45);
+                setTargets(1, 5);
                 break;
             case LEVEL_TWO:
-                elevator.setTarget(1);
-                arm.setTarget(45);
+                setTargets(0.75, 1);
                 break;
             case PICKUP:
-                elevator.setTarget(0.7);
-                arm.setTarget(-45);
+                setTargets(0.5, 2);
                 break;
             case INTERMEDIATE:
-                elevator.setTarget(elevator.getCurrent());
-                arm.setTarget(0);
+                setTargets(0.5, 2);
                 break;
             default:
-                elevator.setTarget(0.4);
-                arm.setTarget(0);
+                setTargets(0.75, 0.1);
                 break;
         }
 
@@ -69,17 +67,19 @@ public class Superstructure extends SubsystemBase{
         SmartDashboard.putString("Target State", targetState.toString());
         SmartDashboard.putString("Previous State", previousState.toString());
 
-        if (!elevator.isElevatorAtTarget()) {
-            arm.setTarget(0);
-            if (!arm.isArmAtTarget()) {
-                elevator.setTarget(elevator.getCurrent());
-            }
-        } 
         elevator.runToTarget();
         arm.runToTarget();
     }
 
     public void setTargetState(States newTarget) {
         targetState = newTarget;
+    }
+
+    public void setTargets(double x, double y) {
+        x -= MOUNT_X;
+        y -= MOUNT_Y;
+
+        arm.setTarget(Units.radiansToDegrees(Math.atan2(y, x)));
+        elevator.setTarget(Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)));
     }
 }

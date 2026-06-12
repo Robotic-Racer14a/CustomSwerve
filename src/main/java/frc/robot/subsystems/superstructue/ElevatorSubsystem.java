@@ -11,7 +11,6 @@ import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class ElevatorSubsystem extends SubsystemBase{
@@ -25,8 +24,6 @@ public class ElevatorSubsystem extends SubsystemBase{
         ),
         DCMotor.getKrakenX60Foc(1)
         );
-
-    MechanismLigament2d elevatorMech = new MechanismLigament2d("elevator", 1, 90);
 
     double target = 0;
 
@@ -43,7 +40,6 @@ public class ElevatorSubsystem extends SubsystemBase{
 
     @Override
     public void periodic() {
-        elevatorMech.setLength(getCurrent());
     }
 
     @Override
@@ -57,11 +53,6 @@ public class ElevatorSubsystem extends SubsystemBase{
 
 
 
-
-
-    public MechanismLigament2d getMechanism() {
-        return elevatorMech;
-    }
 
 
     public double getCurrent() {
