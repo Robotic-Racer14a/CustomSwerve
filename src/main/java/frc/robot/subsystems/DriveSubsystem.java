@@ -115,6 +115,17 @@ public class DriveSubsystem extends SubsystemBase{
         return Math.sqrt(Math.pow(currentSpeed.vxMetersPerSecond, 2) + Math.pow(currentSpeed.vyMetersPerSecond, 2));
     }
 
+    public ChassisSpeeds getCurrentVelocityComponents() {
+        ChassisSpeeds speeds = m_kinematics.toChassisSpeeds(
+            m_frontLeft.getState(),
+            m_frontRight.getState(),
+            m_backLeft.getState(),
+            m_backRight.getState()
+        );
+
+        return ChassisSpeeds.fromRobotRelativeSpeeds(speeds, getCurrentPose().getRotation());
+    }
+
     /**
      * Method to drive the robot using joystick info.
      *

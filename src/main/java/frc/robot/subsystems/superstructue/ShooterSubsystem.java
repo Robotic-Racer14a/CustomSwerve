@@ -6,12 +6,16 @@ import com.ctre.phoenix6.hardware.TalonFX;
 
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class ShooterSubsystem extends SubsystemBase {
 
     TalonFX shootMotor = new TalonFX(40);
+
+    double SHOOT_ANGLE = Units.degreesToRadians(15);
+    double SHOOTER_HEIGHT = Units.inchesToMeters(22);
 
     DCMotorSim shootMotorSim = new DCMotorSim(
         LinearSystemId.createDCMotorSystem(

@@ -20,11 +20,8 @@ import frc.robot.subsystems.superstructue.Superstructure.States;
 public class Robot extends TimedRobot {
 
   final DriveSubsystem drive = new DriveSubsystem();
-  Superstructure superstructure = new Superstructure();
+  Superstructure superstructure = new Superstructure(drive::getCurrentPose, drive::getCurrentVelocityComponents);
   final CommandXboxController driveController = new CommandXboxController(0);
-
-  public static boolean armClear = false;
-  public static boolean elevatorAtTarget = false;
 
   public Robot() {
 
