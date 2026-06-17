@@ -25,6 +25,7 @@ public class Superstructure extends SubsystemBase{
     }
     
     ShooterSubsystem shooter = new ShooterSubsystem();
+    TurretSubsystem turret = new TurretSubsystem();
     States tempState = States.STOW;
     States targetState = States.STOW;
     States previousState = States.STOW;
@@ -49,6 +50,7 @@ public class Superstructure extends SubsystemBase{
         
         // shootTargetPublisher.set(new Pose2d(redGoal, Rotation2d.kZero));
         setTargets(redGoal, 0);
+        firstPassPublisher.set(new Pose2d(getLandingPosition(turret.getCurrent() + getTurretPose().getRotation().getRadians(), shooter.getVelocity()), Rotation2d.kZero));
 
         switch (targetState) {
             case SCORING:
@@ -74,15 +76,12 @@ public class Superstructure extends SubsystemBase{
     public void setTargets(Translation2d shotTarget, double counter) {
         Pose2d turretPose = getTurretPose();
         double distance = Math.sqrt(shotTarget.getSquaredDistance(turretPose.getTranslation()));
-        boolean pass = false;
         
         SmartDashboard.putNumber("Distance", distance);
         if (distance < 1.25) {
             distance = 1.25;
-            pass = true;
         } else if (distance > 10) {
             distance = 10;
-            pass = true;
 
         }
 
@@ -93,15 +92,17 @@ public class Superstructure extends SubsystemBase{
                 / (Math.cos((Math.PI / 2.0) - shooter.SHOOT_ANGLE));
 
         double turretAngle = Math.atan2(shotTarget.getY() - turretPose.getY(), shotTarget.getX() - turretPose.getX());
+        SmartDashboard.putNumber("Velo", vel);
 
+        shooter.setVelocity(vel);
+        turret.setTarget(turretAngle, turretPose.getRotation());
         Translation2d shootingSpot = getLandingPosition(turretAngle, vel);
 
-        if (counter == 0) {//(shootingSpot.getDistance(shotTarget) > 0.5 && !pass) {
+        if (counter < 1) { //(shootingSpot.getDistance(shotTarget) > 0.5 && !pass) {
             counter ++;
             setTargets(shotTarget.minus(shootingSpot.minus(shotTarget)), counter);
         } else {
             shootTargetPublisher.set(new Pose2d(shotTarget, Rotation2d.kZero));
-            firstPassPublisher.set(new Pose2d(shootingSpot, Rotation2d.kZero));
         }
 
         
@@ -117,7 +118,6 @@ public class Superstructure extends SubsystemBase{
         double rotationY = speedsSupplier.get().omegaRadiansPerSecond * Math.sin(getTurretPose().getRotation().getRadians()) * Units.inchesToMeters(10);
         Translation2d shootPose = new Translation2d((horizontalVelo * Math.cos(turretAngle) * t) + speedsSupplier.get().vxMetersPerSecond + rotationX, (horizontalVelo * Math.sin(turretAngle) * t) + speedsSupplier.get().vyMetersPerSecond + rotationY);
 
-        SmartDashboard.putNumber("Velo", shootPower);
         return shootPose.plus(getTurretPose().getTranslation());
     }
 }
