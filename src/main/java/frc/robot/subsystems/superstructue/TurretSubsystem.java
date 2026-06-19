@@ -55,7 +55,7 @@ public class TurretSubsystem extends SubsystemBase {
 
     @Override
     public void simulationPeriodic() {
-        pid.setPID(20, 0, 3.5);
+        pid.setPID(20, 0, 2.5);
         ff.setKs(0);
         ff.setKv(0.2);
         updateSimState(0.02, RobotController.getBatteryVoltage());

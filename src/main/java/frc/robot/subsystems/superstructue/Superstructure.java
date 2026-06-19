@@ -20,15 +20,20 @@ public class Superstructure extends SubsystemBase{
     public static enum States {
         SCORING,
         PASSING,
+        STOPPED
+    }
+
+    public static enum SecondaryStates {
         INTAKE,
-        STOW
+        SHOOTING,
+        SHOOTANDINTAKE,
+        STOPPED
     }
     
     ShooterSubsystem shooter = new ShooterSubsystem();
     TurretSubsystem turret = new TurretSubsystem();
-    States tempState = States.STOW;
-    States targetState = States.STOW;
-    States previousState = States.STOW;
+    States targetState = States.STOPPED;
+    SecondaryStates targetSecondary = SecondaryStates.STOPPED;
     Supplier<Pose2d> robotPose; 
     Supplier<ChassisSpeeds> speedsSupplier;
 
@@ -57,16 +62,25 @@ public class Superstructure extends SubsystemBase{
                 break;
             case PASSING:
                 break;
-            case INTAKE:
-                break;
             default:
                 break;
+        }
+
+        switch (targetSecondary) {
+            case INTAKE:
+            case SHOOTING:
+            case SHOOTANDINTAKE:
+            default:
         }
 
     }
 
     public void setTargetState(States newTarget) {
         targetState = newTarget;
+    }
+
+    public void setSecondaryState(SecondaryStates newTarget) {
+        targetSecondary = newTarget;
     }
 
     public Pose2d getTurretPose() {

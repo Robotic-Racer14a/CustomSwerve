@@ -90,10 +90,8 @@ public class Robot extends TimedRobot {
       superstructure.setTargetState(States.SCORING);
     } else if (driveController.b().getAsBoolean()) {
       superstructure.setTargetState(States.PASSING);
-    } else if (driveController.x().getAsBoolean()) {
-      superstructure.setTargetState(States.INTAKE);
     } else if (driveController.y().getAsBoolean()) {
-      superstructure.setTargetState(States.STOW);
+      superstructure.setTargetState(States.STOPPED);
     } 
   }
 
