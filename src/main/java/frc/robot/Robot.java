@@ -13,7 +13,7 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import frc.robot.subsystems.DriveSubsystem;
+import frc.robot.subsystems.drivetrain.DriveSubsystem;
 import frc.robot.subsystems.superstructue.Superstructure;
 
 public class Robot extends TimedRobot {
