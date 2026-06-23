@@ -14,11 +14,12 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.drivetrain.DriveSubsystem;
+import frc.robot.subsystems.drivetrain.DrivetrainController;
 import frc.robot.subsystems.superstructue.Superstructure;
 
 public class Robot extends TimedRobot {
 
-  final DriveSubsystem drive = new DriveSubsystem();
+  DrivetrainController drive = new DrivetrainController();
   Superstructure superstructure = new Superstructure();
   final CommandXboxController driveController = new CommandXboxController(0);
 
@@ -66,26 +67,6 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    final var xSpeed =
-        -MathUtil.applyDeadband(driveController.getLeftY(), 0.02)
-            * DriveSubsystem.kMaxSpeed;
-
-    // Get the y speed or sideways/strafe speed. We are inverting this because
-    // we want a positive value when we pull to the left. Xbox controllers
-    // return positive values when you pull to the right by default.
-    final var ySpeed =
-        -MathUtil.applyDeadband(driveController.getLeftX(), 0.02)
-            * DriveSubsystem.kMaxSpeed;
-
-    // Get the rate of angular rotation. We are inverting this because we want a
-    // positive value when we pull to the left (remember, CCW is positive in
-    // mathematics). Xbox controllers return positive values when you pull to
-    // the right by default.
-    final var rot =
-        -MathUtil.applyDeadband(driveController.getRightX(), 0.02)
-            * DriveSubsystem.kMaxAngularSpeed;
-
-    drive.drive(xSpeed, ySpeed, rot, this.getPeriod());
 
 
     if (driveController.a().getAsBoolean()) {
