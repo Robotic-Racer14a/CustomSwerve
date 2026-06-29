@@ -11,6 +11,9 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -18,29 +21,124 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class DrivetrainController extends SubsystemBase{
 
+    public enum DriveStates {
+        DRIVE_TO_POINT,
+        DRIVER,
+        X_MODE
+    }
+
+    
+    StructPublisher<Pose2d> targetPosePublisher = NetworkTableInstance.getDefault()
+        .getStructTopic("Target Pose", Pose2d.struct).publish();
+
+    private final Translation2d chargeStationCorner1 = new Translation2d(2.5,1); //This is measured close to grid on bump side
+    private final Translation2d chargeStationCorner2 = new Translation2d(5.3, 4.5); //This is measured away from grid on open side
+
     DriveSubsystem drive = new DriveSubsystem();
 
+    int rowID = 1; //1 is closest to HP station, 9 is furthest (bump)
+
     private final PIDController translationalController = new PIDController(5, 0, 0.4);
+    private final ProfiledPIDController rotationalController = new ProfiledPIDController(0, 0, 0, new TrapezoidProfile.Constraints(Math.PI * 2, Math.PI * 2));
     private final SlewRateLimiter accelerationLimiter = new SlewRateLimiter(100, -4, 0); 
 
     private double previousDriveToPoseTime;
     private double previousDriveToPoseDirection;
+    private double previousDriveToPoseVelo;
 
     private Pose2d targetPose = new Pose2d(1,1, Rotation2d.kZero); //Pose2d.kZero;
     private LinearVelocity maxPIDSpeed = MetersPerSecond.of(3), defaultPIDSpeed = maxPIDSpeed;
     private AngularVelocity maxPIDAngularSpeed = RotationsPerSecond.of(1);
     private double distanceUntilDone = 0.25, defaultDistance = distanceUntilDone;
 
-    public DrivetrainController() {
+    DriveStates state;
 
+    public DrivetrainController() {
+        rotationalController.enableContinuousInput(-Math.PI, Math.PI);
     }
 
     @Override
     public void periodic() {
         translationalController.setPID(5, 0, 0.4);
-        // targetPose = new Pose2d(0,0, Rotation2d.kZero);
-        targetPose = new Pose2d(5,5, Rotation2d.kZero);
+        rotationalController.setPID(8, 0, 0.4);
+        rowID = 4;
+        targetPose = new Pose2d(8, 3, Rotation2d.k180deg);
+        
+        if (state == DriveStates.DRIVE_TO_POINT) {
+            targetPose = getTargetPose();
+        }
         driveToPosition();
+    }
+
+    public void setDriveState (DriveStates state) {
+        this.state = state;
+    }
+
+    public Pose2d getTargetPose() {
+        Pose2d targetPose = Pose2d.kZero;
+        switch (rowID) {
+            case 1:
+                targetPose = new Pose2d(1.85,4.95, Rotation2d.k180deg);
+                break;
+            case 2:
+                targetPose = new Pose2d(1.85,4.42, Rotation2d.k180deg);
+                break;
+            case 3:
+                targetPose = new Pose2d(1.85,3.85, Rotation2d.k180deg);
+                break;
+            case 4:
+                targetPose = new Pose2d(1.85,3.3, Rotation2d.k180deg);
+                break;
+            case 5:
+                targetPose = new Pose2d(1.85,2.77, Rotation2d.k180deg);
+                break;
+            case 6:
+                targetPose = new Pose2d(1.85,2.2, Rotation2d.k180deg);
+                break;
+            case 7:
+                targetPose = new Pose2d(1.85,1.65, Rotation2d.k180deg);
+                break;
+            case 8:
+                targetPose = new Pose2d(1.85,1.12, Rotation2d.k180deg);
+                break;
+            case 9:
+                targetPose = new Pose2d(1.85,0.55, Rotation2d.k180deg);
+                break;
+        }
+
+        targetPose = getModifiedTarget(targetPose);
+
+        targetPosePublisher.set(targetPose);
+        return targetPose;
+    }
+
+    public Pose2d getModifiedTarget(Pose2d targetPose) {
+        if (doesPoseCrossChargeStation(targetPose)) {
+            targetPose = new Pose2d(2,.5, Rotation2d.k180deg);
+            if (drive.getCurrentPose().getY() > chargeStationCorner1.getY() && drive.getCurrentPose().getX() > chargeStationCorner2.getX()) {
+                targetPose = new Pose2d(5.5,.5, Rotation2d.k180deg);
+            }
+        }
+
+        return targetPose;
+    }
+
+    public boolean doesPoseCrossChargeStation(Pose2d targetPose) {
+        if (drive.getCurrentPose().getX() < chargeStationCorner1.getX()) return false;
+        if (Math.abs(targetPose.getX() - drive.getCurrentPose().getX()) < 0.2) return drive.getCurrentPose().getY() < chargeStationCorner1.getY() || drive.getCurrentPose().getY() > chargeStationCorner2.getY();
+        
+        double slope = (targetPose.getY() - drive.getCurrentPose().getY()) / (targetPose.getX() - drive.getCurrentPose().getX());
+        double intersept = targetPose.getY() - (slope * targetPose.getX());
+
+        double crossover1 = (slope * chargeStationCorner1.getX()) + intersept;
+        double crossover2 = (slope * chargeStationCorner2.getX()) + intersept;
+
+        if (crossover1 < chargeStationCorner1.getY()) {
+            return crossover2 > chargeStationCorner1.getY();
+        } else if (crossover1 > chargeStationCorner2.getY()) {
+            return crossover2 < chargeStationCorner2.getY();
+        }
+        return true;
     }
 
     public void driveToPosition() {
@@ -85,12 +183,21 @@ public class DrivetrainController extends SubsystemBase{
         double limitedAngleToPose = previousDriveToPoseDirection;
 
         
+        if (Rotation2d.fromRadians(limitedAngleToPose).relativeTo(Rotation2d.fromRadians(angleToPose)).getDegrees() > 5 && translationalOutput > 1) {
+            translationalOutput = previousDriveToPoseVelo;
+        }
+        
+        previousDriveToPoseVelo = translationalOutput;
+
         SmartDashboard.putNumber("Actual Commanded Speed", Math.sqrt(
             Math.pow(translationalOutput * Math.cos(limitedAngleToPose), 2) + 
             Math.pow(translationalOutput * Math.sin(limitedAngleToPose), 2)
             ));
+
+        rotationalController.setGoal(targetPose.getRotation().getRadians());
+        double rotationalRate = rotationalController.calculate(drive.getCurrentPose().getRotation().getRadians());
         
-        drive.drive(translationalOutput * Math.cos(limitedAngleToPose), translationalOutput * Math.sin(limitedAngleToPose), 0, 0.02);
+        drive.drive(translationalOutput * Math.cos(limitedAngleToPose), translationalOutput * Math.sin(limitedAngleToPose), rotationalRate, 0.02);
                         
     }
 

@@ -13,13 +13,14 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class TopArmSubsystem extends SubsystemBase{
     TalonFX armMotor = new TalonFX(21);
-    ProfiledPIDController armPID = new ProfiledPIDController(0, 0, 0, new TrapezoidProfile.Constraints(200, 200));
+    ProfiledPIDController armPID = new ProfiledPIDController(0, 0, 0, new TrapezoidProfile.Constraints(300, 200));
     ArmFeedforward armFF = new ArmFeedforward(0, 0, 0);
     
     double TOP_ARM_LENGTH = Units.inchesToMeters(25);
@@ -51,10 +52,10 @@ public class TopArmSubsystem extends SubsystemBase{
 
     @Override
     public void simulationPeriodic() {
-        armPID.setPID(1, 0, 0.2);
+        armPID.setPID(0.01, 0, 0.004);
         armFF.setKs(0);
         armFF.setKg(0);
-        armFF.setKv(0.15);
+        armFF.setKv(0.003);
         updateSimState(0.02, RobotController.getBatteryVoltage());
     }
 
@@ -68,7 +69,7 @@ public class TopArmSubsystem extends SubsystemBase{
 
 
     public double getCurrent() {
-        return armMotor.getPosition().getValueAsDouble();
+        return armMotor.getPosition().getValueAsDouble() * 360 * 0.25;
     }
 
     public void setTarget(double target) {
@@ -83,6 +84,8 @@ public class TopArmSubsystem extends SubsystemBase{
 
     public void runToTarget() {
         double output = armPID.calculate(getCurrent());
+        SmartDashboard.putNumber("Arm/TargetV", armPID.getSetpoint().velocity);
+        SmartDashboard.putNumber("Arm/CurrentV", armMotor.getVelocity().getValueAsDouble() * 360 * 0.25);
 
         setVoltage(output);
     }

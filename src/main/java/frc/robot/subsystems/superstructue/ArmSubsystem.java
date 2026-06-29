@@ -20,7 +20,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class ArmSubsystem extends SubsystemBase{
     TalonFX armMotor = new TalonFX(20);
-    ProfiledPIDController armPID = new ProfiledPIDController(0, 0, 0, new TrapezoidProfile.Constraints(200, 200));
+    ProfiledPIDController armPID = new ProfiledPIDController(0, 0, 0, new TrapezoidProfile.Constraints(300, 200));
     ArmFeedforward armFF = new ArmFeedforward(0, 0, 0);
     double BOTTOM_ARM_LENGTH = Units.inchesToMeters(30);
 
@@ -51,10 +51,10 @@ public class ArmSubsystem extends SubsystemBase{
 
     @Override
     public void simulationPeriodic() {
-        armPID.setPID(2, 0, 0.2);
+        armPID.setPID(0.01, 0, 0);   
         armFF.setKs(0);
         armFF.setKg(0);
-        armFF.setKv(0.15);
+        armFF.setKv(0.0025);
         updateSimState(0.02, RobotController.getBatteryVoltage());
     }
 
@@ -69,7 +69,7 @@ public class ArmSubsystem extends SubsystemBase{
 
 
     public double getCurrent() {
-        return armMotor.getPosition().getValueAsDouble() * 0.5;
+        return armMotor.getPosition().getValueAsDouble() * 360 * 0.1;
     }
 
     public void setTarget(double target) {

@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.drivetrain.DriveSubsystem;
 import frc.robot.subsystems.drivetrain.DrivetrainController;
+import frc.robot.subsystems.drivetrain.DrivetrainController.DriveStates;
 import frc.robot.subsystems.superstructue.Superstructure;
 
 public class Robot extends TimedRobot {
@@ -68,13 +69,16 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
 
+    if (driveController.x().getAsBoolean()) {
+      drive.setDriveState(DriveStates.DRIVE_TO_POINT);
+    } else {
+      drive.setDriveState(DriveStates.DRIVER);
+    }
 
     if (driveController.a().getAsBoolean()) {
       superstructure.setTargetState(Superstructure.States.HIGH);
     } else if (driveController.b().getAsBoolean()) {
       superstructure.setTargetState(Superstructure.States.MID);
-    } else if (driveController.x().getAsBoolean()) {
-      superstructure.setTargetState(Superstructure.States.LOW);
     } else if (driveController.y().getAsBoolean()) {
       superstructure.setTargetState(Superstructure.States.STOW);
     } 
