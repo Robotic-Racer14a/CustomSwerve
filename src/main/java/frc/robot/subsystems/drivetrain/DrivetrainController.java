@@ -92,7 +92,7 @@ public class DrivetrainController extends SubsystemBase{
             case 5:
                 targetPose = new Pose2d(1.85,2.77, Rotation2d.k180deg);
                 break;
-            case 6:
+            case 6:    
                 targetPose = new Pose2d(1.85,2.2, Rotation2d.k180deg);
                 break;
             case 7:
