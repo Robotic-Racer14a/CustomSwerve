@@ -61,8 +61,8 @@ public class DrivetrainController extends SubsystemBase{
     public void periodic() {
         translationalController.setPID(5, 0, 0.4);
         rotationalController.setPID(8, 0, 0.4);
-        rowID = 4;
-        targetPose = new Pose2d(8, 3, Rotation2d.k180deg);
+        rowID = 8;
+        targetPose = new Pose2d(12, 6, Rotation2d.k180deg);
         
         if (state == DriveStates.DRIVE_TO_POINT) {
             targetPose = getTargetPose();
@@ -113,10 +113,23 @@ public class DrivetrainController extends SubsystemBase{
     }
 
     public Pose2d getModifiedTarget(Pose2d targetPose) {
-        if (doesPoseCrossChargeStation(targetPose)) {
-            targetPose = new Pose2d(2,.5, Rotation2d.k180deg);
-            if (drive.getCurrentPose().getY() > chargeStationCorner1.getY() && drive.getCurrentPose().getX() > chargeStationCorner2.getX()) {
-                targetPose = new Pose2d(5.5,.5, Rotation2d.k180deg);
+        if (drive.getCurrentPose().getX() < chargeStationCorner1.getX()) {
+            if (distanceFromPose(drive.getCurrentPose(), targetPose) > .8) {
+                targetPose = targetPose.plus(new Transform2d(-0.5, 0, Rotation2d.kZero));
+            }
+        } else if (drive.getCurrentPose().getY() > chargeStationCorner2.getY()) {
+            if (doesPoseCrossChargeStation(targetPose)) {
+                targetPose = new Pose2d(2,4.75, Rotation2d.k180deg);
+                if (drive.getCurrentPose().getY() > (chargeStationCorner2.getY() + 0.75)) {
+                    targetPose = new Pose2d(5.5, 4.75, Rotation2d.k180deg);
+                }
+            }
+        } else {
+            if (doesPoseCrossChargeStation(targetPose)) {
+                targetPose = new Pose2d(2,.5, Rotation2d.k180deg);
+                if (drive.getCurrentPose().getY() > chargeStationCorner1.getY() && drive.getCurrentPose().getX() > chargeStationCorner2.getX()) {
+                    targetPose = new Pose2d(5.5,.5, Rotation2d.k180deg);
+                }
             }
         }
 
