@@ -37,6 +37,8 @@ public class DrivetrainController extends SubsystemBase{
     DriveSubsystem drive = new DriveSubsystem();
 
     int rowID = 1; //1 is closest to HP station, 9 is furthest (bump)
+    int pickupID = 1; //1 is close to opp community, 3 is chute
+    boolean forceBumpSide = true;
 
     private final PIDController translationalController = new PIDController(5, 0, 0.4);
     private final ProfiledPIDController rotationalController = new ProfiledPIDController(0, 0, 0, new TrapezoidProfile.Constraints(Math.PI * 2, Math.PI * 2));
@@ -61,20 +63,31 @@ public class DrivetrainController extends SubsystemBase{
     public void periodic() {
         translationalController.setPID(5, 0, 0.4);
         rotationalController.setPID(8, 0, 0.4);
-        rowID = 8;
-        targetPose = new Pose2d(12, 6, Rotation2d.k180deg);
+        rowID = 4;
+        pickupID = 1;
+        forceBumpSide = false;
+        targetPose = getTargetPickupPose();
         
         if (state == DriveStates.DRIVE_TO_POINT) {
-            targetPose = getTargetPose();
+            targetPose = getTargetScoringPose();
         }
+
+        
+        targetPosePublisher.set(targetPose);
+
         driveToPosition();
     }
+
+
+
+
+
 
     public void setDriveState (DriveStates state) {
         this.state = state;
     }
 
-    public Pose2d getTargetPose() {
+    public Pose2d getTargetScoringPose() {
         Pose2d targetPose = Pose2d.kZero;
         switch (rowID) {
             case 1:
@@ -106,18 +119,14 @@ public class DrivetrainController extends SubsystemBase{
                 break;
         }
 
-        targetPose = getModifiedTarget(targetPose);
 
-        targetPosePublisher.set(targetPose);
-        return targetPose;
-    }
-
-    public Pose2d getModifiedTarget(Pose2d targetPose) {
-        if (drive.getCurrentPose().getX() < chargeStationCorner1.getX()) {
+        if (drive.getCurrentPose().getX() > 12.5) {
+            targetPose = new Pose2d(drive.getCurrentPose().getTranslation().plus(new Translation2d(-2, 0)), drive.getCurrentPose().getRotation());
+        } else if (drive.getCurrentPose().getX() < chargeStationCorner1.getX()) {
             if (distanceFromPose(drive.getCurrentPose(), targetPose) > .8) {
                 targetPose = targetPose.plus(new Transform2d(-0.5, 0, Rotation2d.kZero));
             }
-        } else if (drive.getCurrentPose().getY() > chargeStationCorner2.getY()) {
+        } else if (drive.getCurrentPose().getY() > chargeStationCorner2.getY() - 0.5 && !forceBumpSide) {
             if (doesPoseCrossChargeStation(targetPose)) {
                 targetPose = new Pose2d(2,4.75, Rotation2d.k180deg);
                 if (drive.getCurrentPose().getY() > (chargeStationCorner2.getY() + 0.75)) {
@@ -132,6 +141,54 @@ public class DrivetrainController extends SubsystemBase{
                 }
             }
         }
+
+        return targetPose;
+    }
+
+    public Pose2d getTargetPickupPose() {
+        Pose2d targetPose = Pose2d.kZero;
+
+        switch (pickupID) {
+            case 1:
+                targetPose = new Pose2d(15.5,6.1, Rotation2d.k180deg);
+                break;
+            case 2:
+                targetPose = new Pose2d(15.5,7.5, Rotation2d.k180deg);
+                break;
+            default:
+                targetPose = new Pose2d(14.2,7.2, Rotation2d.kCCW_90deg);
+                break;
+        }
+
+
+
+
+        if (drive.getCurrentPose().getX() < chargeStationCorner2.getX()) {
+            if (forceBumpSide) {
+                if (drive.getCurrentPose().getX() < chargeStationCorner1.getX() && drive.getCurrentPose().getY() > chargeStationCorner1.getY() + 0.3) {
+                    targetPose = new Pose2d(2,0.5, Rotation2d.k180deg);
+                } else {
+                    targetPose = new Pose2d(6, 0.5, Rotation2d.k180deg);
+                }
+            } else {
+                if (drive.getCurrentPose().getX() < chargeStationCorner1.getX() && drive.getCurrentPose().getY() < chargeStationCorner2.getY() - 0.3) {
+                    targetPose = new Pose2d(2,4.75, Rotation2d.k180deg);
+                } else {
+                    targetPose = new Pose2d(6, 4.75, Rotation2d.k180deg);
+                }
+            }
+        } else if (Math.abs(drive.getCurrentPose().getY() - targetPose.getY()) > 0.2 && pickupID != 3) {
+            if (drive.getCurrentPose().getY() < 5.9) {
+                targetPose = new Pose2d(targetPose.getTranslation().plus(new Translation2d(-2, 0.5)), targetPose.getRotation());
+            } else if (Math.abs(drive.getCurrentPose().getX() - targetPose.getX()) < 0.3) {
+                targetPose = new Pose2d(14, 6.8, drive.getCurrentPose().getRotation());
+            } else {
+                targetPose = new Pose2d(targetPose.getTranslation().plus(new Translation2d(-0.5, 0)), targetPose.getRotation());
+            }
+        }
+
+
+
 
         return targetPose;
     }
@@ -174,7 +231,9 @@ public class DrivetrainController extends SubsystemBase{
         double elapsedTime = currentTime - previousDriveToPoseTime;
 
         double targetChange = angleToPose - previousDriveToPoseDirection;
-        SmartDashboard.putNumber("Target Change", targetChange);
+        SmartDashboard.putNumber("DTP-Target Change", targetChange);
+        SmartDashboard.putNumber("DTP-Angle To Pose", angleToPose);
+        SmartDashboard.putNumber("DTP-Previous Angle", previousDriveToPoseDirection);
         if (targetChange > Math.PI) targetChange -= 2 * Math.PI;
         if (targetChange < -Math.PI) targetChange += 2 * Math.PI;
 
@@ -192,6 +251,9 @@ public class DrivetrainController extends SubsystemBase{
                     -maxDirectionChange * elapsedTime,
                     maxDirectionChange * elapsedTime);
         }
+        //Looks stupid, is here to normilize back to a single rotation
+        previousDriveToPoseDirection = Rotation2d.fromRadians(previousDriveToPoseDirection).getRotations() % 1;
+        previousDriveToPoseDirection = Rotation2d.fromRotations(previousDriveToPoseDirection).getRadians();
         previousDriveToPoseTime = currentTime;
         double limitedAngleToPose = previousDriveToPoseDirection;
 
